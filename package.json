@@ -1,0 +1,56 @@
+{
+  "name": "lipdub-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for LipDub 2 — make a person in a video appear to speak a different audio track, with matched lip movement.",
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "lipdub",
+    "lip-sync",
+    "dubbing",
+    "video",
+    "ai"
+  ],
+  "homepage": "https://github.com/marzvfx/lipdub-mcp#readme",
+  "bugs": "https://github.com/marzvfx/lipdub-mcp/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marzvfx/lipdub-mcp.git"
+  },
+  "license": "Apache-2.0",
+  "author": "MARZ (https://lipdub.ai)",
+  "type": "module",
+  "bin": {
+    "lipdub-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node -e \"require('fs').chmodSync('dist/index.js', 0o755)\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "prepack": "npm run build",
+    "verify": "npm run typecheck && npm run lint && npm run build && npm run test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.0",
+    "@types/node": "22.18.1",
+    "eslint": "9.39.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.46.1",
+    "vitest": "4.1.11"
+  }
+}

@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# This is a PUBLIC repository, so CI runs on GitHub-hosted runners only. Self-hosted
+# runners must never be used here: a pull request from a fork would execute
+# attacker-controlled code inside the corporate network. For the same reason the
+# trigger is `pull_request`, not `pull_request_target`, so fork PRs get no secrets.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ['20', '22']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+  leak-scan:
+    # The published artifact must not carry internal terminology. The structural half
+    # of this check lives in the repo; the internal-name list is private and is
+    # materialised here from a secret, because a public file enumerating internal
+    # system names would disclose exactly what it exists to protect.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Materialise the private term list
+        id: terms
+        env:
+          FORBIDDEN_TERMS: ${{ secrets.LIPDUB_FORBIDDEN_TERMS }}
+        run: |
+          if [ -z "${FORBIDDEN_TERMS}" ]; then
+            echo "::warning::LIPDUB_FORBIDDEN_TERMS is not configured; only structural leak checks will run."
+            exit 0
+          fi
+          printf '%s\n' "${FORBIDDEN_TERMS}" > "${RUNNER_TEMP}/forbidden-terms.txt"
+          echo "path=${RUNNER_TEMP}/forbidden-terms.txt" >> "${GITHUB_OUTPUT}"
+
+      - name: Scan the built artifact and the public docs
+        env:
+          LIPDUB_FORBIDDEN_TERMS_FILE: ${{ steps.terms.outputs.path }}
+        run: npx vitest run test/no-secrets.test.ts
+
+      - name: Remove the term list
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/forbidden-terms.txt"
+
+  package:
+    # Proves that what npm would actually publish is installable and runnable, which a
+    # plain `npm run build` does not.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Pack
+        run: npm pack
+
+      - name: Install the tarball into a clean project and run it
+        run: |
+          mkdir -p "${RUNNER_TEMP}/consumer"
+          cd "${RUNNER_TEMP}/consumer"
+          npm init -y >/dev/null
+          npm install "${GITHUB_WORKSPACE}"/lipdub-mcp-*.tgz
+          # A bare handshake: the server must answer initialize on stdout and exit cleanly.
+          printf '%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2026-07-28","capabilities":{},"clientInfo":{"name":"ci","version":"0"}}}' \
+            | timeout 30 npx lipdub-mcp | tee handshake.json
+          grep -q '"serverInfo"' handshake.json

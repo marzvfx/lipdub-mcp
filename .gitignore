@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+*.tgz
+*.log
+
+# Never commit an API key. See README "Setup" — the key belongs in your MCP
+# client's env config, not in this repo.
+.env
+.env.*
+.mcp.json

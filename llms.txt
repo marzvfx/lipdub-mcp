@@ -1,0 +1,29 @@
+# LipDub MCP server
+
+> An MCP server that lets an AI agent lip-sync a video to a different audio track using
+> LipDub 2. You supply a source video of a person speaking and the audio you want them
+> to appear to say; LipDub returns a video where the lip movement matches the new audio.
+
+Important: LipDub 2 does **not** translate, transcribe, or generate speech. The caller
+supplies finished audio. To dub into another language, generate that audio with a
+text-to-speech or voice tool first, host it at a public URL, and pass that URL.
+
+Both inputs are public URLs, not local file paths. A render takes about 7–15 minutes
+and consumes credits from the user's LipDub account. Checking status is free and is not
+rate-limited.
+
+## Tools
+
+- `lipdub_check_connection` — verify the API key and identify the account. Free.
+- `lipdub_create_render` — start a render from `video_url` + `audio_url`. **Spends credits.**
+- `lipdub_get_render` — status, plus the download link once the render is finished. Free.
+- `lipdub_wait_for_render` — block for a bounded window rather than polling. Free.
+- `lipdub_list_renders` — recent renders, to recover a lost render id. Free.
+
+## Docs
+
+- [README](https://github.com/marzvfx/lipdub-mcp/blob/main/README.md): install snippets for Claude, Cursor, VS Code, Gemini CLI and Codex; file hosting recipes; troubleshooting.
+- [Contributing](https://github.com/marzvfx/lipdub-mcp/blob/main/CONTRIBUTING.md): development workflow and the rules for tool descriptions.
+- [Security](https://github.com/marzvfx/lipdub-mcp/blob/main/SECURITY.md): API key handling and vulnerability reporting.
+- [LipDub API reference](https://lipdub.readme.io/): the underlying REST API.
+- [LipDub API docs index](https://lipdub.readme.io/llms.txt): machine-readable index of the API documentation.

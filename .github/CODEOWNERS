@@ -1,0 +1,10 @@
+# Everything needs a review from the LipDub MCP maintainers.
+*                       @marzvfx/lipdub-mcp-maintainers
+
+# Tool descriptions and error text are the public contract that language models read,
+# and the leak-scan rules are what keep internal terminology out of a public package.
+# Both get closer review than ordinary code.
+/src/tools/             @marzvfx/lipdub-mcp-maintainers
+/src/lipdub/errors.ts   @marzvfx/lipdub-mcp-maintainers
+/test/helpers/          @marzvfx/lipdub-mcp-maintainers
+/.github/workflows/     @marzvfx/lipdub-mcp-maintainers

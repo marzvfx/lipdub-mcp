@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+# GitHub-hosted runners only — see the note in ci.yml.
+permissions:
+  contents: write # create the GitHub Release object, not just the tag
+  id-token: write # npm trusted publishing (OIDC); no long-lived npm token is stored
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm-publish # protected environment, requires a reviewer
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - run: npm ci
+
+      - name: Verify before publishing
+        run: npm run verify
+
+      - name: Check the tag matches the package version
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          package_version="$(node -p "require('./package.json').version")"
+          if [ "${tag_version}" != "${package_version}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package version ${package_version}" >&2
+            exit 1
+          fi
+
+      - name: Publish to npm with provenance
+        run: npm publish --provenance --access public
+
+      - name: Create the GitHub Release
+        # A tag alone is not a release: without this, the version is invisible on the
+        # releases page and release notes never get written.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file CHANGELOG.md \
+            --verify-tag
+
+  registry:
+    # Publishes the server.json entry to the official MCP registry so the server is
+    # discoverable rather than only installable.
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the registry publisher
+        run: |
+          curl -sSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_amd64.tar.gz" \
+            | tar xz mcp-publisher
+          chmod +x mcp-publisher
+
+      - name: Authenticate against the ai.lipdub namespace
+        # DNS verification against a TXT record on lipdub.ai. The signing key is held
+        # as a secret; the domain proves first-party ownership in a way the
+        # io.github.* namespace cannot.
+        env:
+          MCP_PRIVATE_KEY: ${{ secrets.MCP_REGISTRY_PRIVATE_KEY }}
+        run: ./mcp-publisher login dns --domain lipdub.ai --private-key "${MCP_PRIVATE_KEY}"
+
+      - name: Publish
+        run: ./mcp-publisher publish
