@@ -1,0 +1,71 @@
+name: Bug report
+description: Something in the MCP server is not working
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### Before you post: never paste your API key
+
+        Your LipDub API key is not scoped and does not expire, and revoking it means
+        regenerating it — which breaks every other integration on your account at the
+        same time. So a key pasted here is genuinely painful to clean up.
+
+        Please redact it from any log, config or command you paste. If you think you
+        have already exposed one, regenerate it at
+        https://app.lipdub.ai/settings/api-keys and update everywhere it is used.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: |
+        What did you ask the agent to do? Include the tool call if you can see it.
+      placeholder: |
+        1. Asked Claude to "lip-sync <url> to <url>"
+        2. It called lipdub_create_render
+        3. Got this error: ...
+    validations:
+      required: true
+
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      description: Which client, and which version?
+      placeholder: Claude Code 2.1.0 / Cursor 0.45 / Gemini CLI
+    validations:
+      required: true
+
+  - type: input
+    id: server-version
+    attributes:
+      label: lipdub-mcp version
+      description: Output of `npx lipdub-mcp --version`, or the version in your config.
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      description: Output of `node --version`. This server needs Node 20 or newer.
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Server output
+      description: |
+        Set `LIPDUB_LOG_LEVEL=debug` and paste the server's stderr output.
+        Check once more that no API key is in it — this box is public.
+      render: shell

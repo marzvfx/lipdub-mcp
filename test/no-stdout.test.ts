@@ -36,6 +36,27 @@ interface SessionOutput {
   stderr: string;
 }
 
+/**
+ * Run the built entry point with arguments and no stdin, capturing both streams.
+ *
+ * Used for the flag paths, which exit immediately rather than serving a session.
+ *
+ * @param args Command-line arguments to pass.
+ * @returns Whatever the process wrote to stdout and stderr.
+ */
+function runOnce(args: string[]): Promise<SessionOutput> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [ENTRY_POINT, ...args], { stdio: ['ignore', 'pipe', 'pipe'] });
+
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk: Buffer) => (stdout += chunk.toString()));
+    child.stderr.on('data', (chunk: Buffer) => (stderr += chunk.toString()));
+    child.on('error', reject);
+    child.on('close', () => resolve({ stdout, stderr }));
+  });
+}
+
 /** Run the built server through one handshake and capture both streams. */
 function runSession(environment: NodeJS.ProcessEnv): Promise<SessionOutput> {
   return new Promise((resolve, reject) => {
@@ -92,6 +113,21 @@ describe('stdout carries only JSON-RPC', () => {
 
       const toolList = messages.find((message) => message.id === 2);
       expect(toolList?.result?.tools).toHaveLength(5);
+    },
+    30_000,
+  );
+
+  it.runIf(existsSync(ENTRY_POINT))(
+    'answers --version and --help without polluting stdout',
+    async () => {
+      // These are the first things anyone reaches for when a client config looks
+      // broken, so they must work — but they must still leave stdout clean, because
+      // a client may already be listening on it for JSON-RPC.
+      for (const flag of ['--version', '--help']) {
+        const { stdout, stderr } = await runOnce([flag]);
+        expect(stdout, `${flag} wrote to stdout`).toBe('');
+        expect(stderr).toContain('lipdub-mcp');
+      }
     },
     30_000,
   );

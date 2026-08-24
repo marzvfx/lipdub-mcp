@@ -127,11 +127,13 @@ export class RenderService {
   async getState(handle: string): Promise<RenderState> {
     const parsed = parseHandle(handle);
 
+    // No casts needed: ParsedHandle is a discriminated union, so narrowing on `kind`
+    // proves which identifier is present.
     if (parsed.kind === HandleKind.Tracking) {
-      return this.resolveFromTracking(parsed.trackingId as string);
+      return this.resolveFromTracking(parsed.trackingId);
     }
 
-    return this.resolveFromRenderJob(parsed.jobId as number);
+    return this.resolveFromRenderJob(parsed.jobId);
   }
 
   private async resolveFromTracking(trackingId: string): Promise<RenderState> {
@@ -192,7 +194,28 @@ export class RenderService {
   private async fetchDownloadUrl(jobId: number): Promise<string | null> {
     const body = await this.client.get<Record<string, unknown>>(`/v1/renders/${jobId}/download`);
     const data = unwrapData<{ download_url?: string }>(body);
-    return typeof data?.download_url === 'string' ? data.download_url : null;
+
+    if (typeof data?.download_url !== 'string') {
+      return null;
+    }
+
+    // The link is handed to the caller and is a bearer credential, so it is checked
+    // before being passed on.
+    //
+    // Deliberately NOT an allowlist of LipDub hostnames: these are pre-signed object
+    // storage links, so the host is the storage provider rather than the API domain,
+    // and pinning it would break legitimate downloads the moment storage moves. The
+    // https requirement is the part that is both safe to enforce and worth enforcing.
+    try {
+      const parsed = new URL(data.download_url);
+      if (parsed.protocol !== 'https:') {
+        return null;
+      }
+    } catch {
+      return null;
+    }
+
+    return data.download_url;
   }
 
   /**

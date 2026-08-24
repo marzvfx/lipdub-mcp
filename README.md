@@ -1,5 +1,10 @@
 # LipDub MCP server
 
+[![CI](https://github.com/marzvfx/lipdub-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/marzvfx/lipdub-mcp/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/lipdub-mcp)](https://www.npmjs.com/package/lipdub-mcp)
+[![node](https://img.shields.io/badge/node-%E2%89%A520-brightgreen)](package.json)
+[![licence: MIT](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
+
 Give your AI agent the ability to lip-sync video.
 
 [LipDub 2](https://lipdub.ai) makes a person in a video appear to speak a different
@@ -238,7 +243,7 @@ directly bypasses them.
 | "out of credits" | Top up at [app.lipdub.ai](https://app.lipdub.ai) |
 | "could not download one of your source files" | The link is a share page, needs a login, or has expired. Use a direct link |
 | "downloaded your files but could not start the render" | Usually no credits, or no clearly visible speaking face |
-| Wait tool returned `timed_out_waiting` | Normal — renders take 7–15 minutes. Not a failure; call it again |
+| Wait tool returned `still_running` | Normal — renders take 7–15 minutes. Not a failure; call it again |
 | Download link stopped working | Links are signed and short-lived. Call `lipdub_get_render` again |
 
 Full API documentation: [lipdub.readme.io](https://lipdub.readme.io/)
@@ -283,5 +288,5 @@ tools; schema changes are additive. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Licence
 
-[Apache-2.0](LICENSE). This licence covers this client. LipDub itself is a commercial
+[MIT](LICENSE). This licence covers this client. LipDub itself is a commercial
 service governed by its own terms.

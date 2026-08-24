@@ -15,8 +15,11 @@ import { toErrorResult, toTextResult, ToolResult } from './result.js';
  */
 
 const DESCRIPTION = [
-  'Check one LipDub render and, once it is ready, get its download link. Takes the',
-  'render_id from lipdub_create_render.',
+  'Check a LipDub render once, right now, and return its download link if it has',
+  'finished. This does NOT wait — it answers immediately with whatever the current',
+  'status is. To wait for a render to finish, use lipdub_wait_for_render instead.',
+  '',
+  'Takes the render_id from lipdub_create_render.',
   '',
   'Free and never rate-limited — check as often as you need.',
   '',

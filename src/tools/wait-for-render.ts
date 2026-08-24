@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { ServerContext } from '../context.js';
 import { TYPICAL_RENDER_DURATION_TEXT } from '../lipdub/constants.js';
 import { isTerminal } from '../lipdub/status.js';
-import { RenderPhase, RenderState } from '../lipdub/types.js';
+import { RenderState } from '../lipdub/types.js';
 import { describeState, structureState } from './get-render.js';
 import { toErrorResult, toTextResult } from './result.js';
 
@@ -41,10 +41,10 @@ const DESCRIPTION = [
   `render takes ${TYPICAL_RENDER_DURATION_TEXT}, so one call is often not enough.`,
   '',
   'If the render is still going when the wait is up, this returns normally with',
-  'timed_out_waiting set to true and status "rendering". That is NOT an error and NOT a',
-  'failure. When it happens: tell the user the render is still in progress, give them',
-  'the render_id so they can come back to it, and either call this tool again or offer',
-  'to check later.',
+  'still_running set to true. That is NOT an error and NOT a failure — the render is',
+  'fine and is still going. When it happens: tell the user it is still in progress,',
+  'give them the render_id so they can come back to it, and call this tool again to',
+  'keep waiting.',
   '',
   'Waiting and status checks are free and never rate-limited.',
 ].join('\n');
@@ -68,7 +68,7 @@ export function registerWaitForRenderTool(server: McpServer, context: ServerCont
           .max(MAXIMUM_MAX_WAIT_SECONDS)
           .default(DEFAULT_MAX_WAIT_SECONDS)
           .describe(
-            'How long to wait before returning. Returning early with timed_out_waiting set to true is normal, not a failure.',
+            'How long to wait before returning. Returning early with still_running set to true is normal, not a failure.',
           ),
       },
       annotations: {
@@ -105,15 +105,26 @@ export function registerWaitForRenderTool(server: McpServer, context: ServerCont
             waitedSeconds - lastProgressAt >= PROGRESS_INTERVAL_SECONDS
           ) {
             lastProgressAt = waitedSeconds;
-            await extra.sendNotification({
-              method: 'notifications/progress',
-              params: {
-                progressToken,
-                progress: waitedSeconds,
-                total: args.max_wait_seconds,
-                message: `Render is ${state.status} — usually ${TYPICAL_RENDER_DURATION_TEXT} in total.`,
-              },
-            });
+            try {
+              await extra.sendNotification({
+                method: 'notifications/progress',
+                params: {
+                  progressToken,
+                  progress: waitedSeconds,
+                  total: args.max_wait_seconds,
+                  message: `Render is ${state.status} — usually ${TYPICAL_RENDER_DURATION_TEXT} in total.`,
+                },
+              });
+            } catch (notificationError) {
+              // A progress update is decoration. If the client rejects it — stale
+              // token, transport hiccup, no support — that must not abort the wait:
+              // the render is already paid for, and throwing here would report a
+              // perfectly healthy render to the user as failed.
+              context.logger.warn('progress notification failed; continuing to wait', {
+                reason:
+                  notificationError instanceof Error ? notificationError.name : 'unknown',
+              });
+            }
           }
 
           state = await context.renders.getState(state.renderId);
@@ -122,28 +133,30 @@ export function registerWaitForRenderTool(server: McpServer, context: ServerCont
         if (isTerminal(state.status)) {
           return toTextResult(describeState(state), {
             ...structureState(state),
-            timed_out_waiting: false,
+            still_running: false,
             waited_seconds: waitedSeconds,
           });
         }
 
+        // The "not a failure" wording leads, because a model that reads "timed out"
+        // first will report the render as failed to the user — while it is in fact
+        // still running and already paid for.
         const text = [
-          `Still ${state.status === RenderPhase.Preparing ? 'preparing' : 'rendering'} after ${waitedSeconds} seconds.`,
-          '',
-          'This is NOT an error and NOT a failure — the render is still in progress and',
-          'the credits are already committed.',
+          `NOT an error and NOT a failure: the render is still ${state.status} after ${waitedSeconds} seconds,`,
+          `which is normal — a render takes about ${TYPICAL_RENDER_DURATION_TEXT} in total.`,
           '',
           `render_id: ${state.renderId}`,
           `status: ${state.status}`,
           '',
-          `A render takes about ${TYPICAL_RENDER_DURATION_TEXT} in total. Tell the user it is`,
-          'still going and give them the render_id, then either call lipdub_wait_for_render',
-          'again or offer to check later with lipdub_get_render.',
+          'Tell the user it is still in progress and give them the render_id, then call',
+          'lipdub_wait_for_render again to keep waiting.',
         ].join('\n');
 
         return toTextResult(text, {
           ...structureState(state),
-          timed_out_waiting: true,
+          still_running: true,
+          is_failure: false,
+          next_action: 'call lipdub_wait_for_render again with the same render_id',
           waited_seconds: waitedSeconds,
         });
       } catch (error) {

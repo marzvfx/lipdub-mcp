@@ -17,7 +17,7 @@
     "type": "git",
     "url": "git+https://github.com/marzvfx/lipdub-mcp.git"
   },
-  "license": "Apache-2.0",
+  "license": "MIT",
   "author": "MARZ (https://lipdub.ai)",
   "type": "module",
   "bin": {

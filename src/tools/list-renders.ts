@@ -19,9 +19,13 @@ const MAXIMUM_LIMIT = 50;
 const DESCRIPTION = [
   'List recent LipDub renders on this account, newest first.',
   '',
-  'Use this to find a render_id you have lost track of, or to show the user their',
-  'recent work. Returns a short summary of each; call lipdub_get_render for the',
-  'download link of a finished one.',
+  'Use this when:',
+  '- you have lost a render_id, for example because earlier conversation was trimmed',
+  '  away and a render is still running or already finished',
+  '- the user asks what they have rendered recently',
+  '',
+  'Returns a short summary of each. Call lipdub_get_render with one of the returned',
+  'render_ids to get its download link.',
   '',
   'Free and never rate-limited.',
 ].join('\n');

@@ -41,8 +41,21 @@ const INSTRUCTIONS = [
   "user's LipDub account. Checking status is free and never rate-limited, so check as",
   'often as you like.',
   '',
-  'Normal flow: lipdub_create_render → lipdub_wait_for_render → give the user the',
-  'download link.',
+  'Normal flow:',
+  '1. Ask the user to approve the charge, then call lipdub_create_render with a',
+  '   video_url and an audio_url. Keep the render_id it returns.',
+  '2. Call lipdub_wait_for_render. It waits for a few minutes and then returns; if the',
+  '   render is not done yet it says so and you simply call it again. That is normal.',
+  '3. Use lipdub_get_render for a single immediate status check without waiting, or to',
+  '   fetch a fresh download link later.',
+  '4. When the status is "succeeded", give the user the download link — it expires.',
+  '',
+  'If you lose a render_id, lipdub_list_renders will find it. If anything fails with an',
+  'authentication error, lipdub_check_connection will tell you whether the key is the',
+  'problem.',
+  '',
+  'This tool generates synthetic video of a real person. Only use it on material the',
+  'user has the rights and consent to alter, and never to impersonate someone.',
 ].join('\n');
 
 /**

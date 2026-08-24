@@ -14,7 +14,28 @@
  *    stuck agent; "provide a direct link to an .mp4, then call X again" does not.
  */
 
-import { SUPPORT_URLS } from './constants.js';
+import {
+  SUPPORT_URLS,
+  SUPPORTED_AUDIO_EXTENSIONS,
+  SUPPORTED_VIDEO_EXTENSIONS,
+} from './constants.js';
+
+/**
+ * Render an extension list as readable prose, e.g. ".mp4, .mov or .webm".
+ *
+ * The supported formats are named in several messages and in the docs. Deriving the
+ * prose from the single constant keeps them from drifting apart when a format is
+ * added, which is exactly the kind of thing nobody remembers to update by hand.
+ *
+ * @param extensions Extensions to list, in the order they should be shown.
+ * @returns A comma-separated list with "or" before the final entry.
+ */
+function formatExtensionList(extensions: readonly string[]): string {
+  if (extensions.length <= 1) {
+    return extensions[0] ?? '';
+  }
+  return `${extensions.slice(0, -1).join(', ')} or ${extensions[extensions.length - 1]}`;
+}
 
 /** Stable machine-readable codes. Safe to expose; they name no internal component. */
 export enum LipDubErrorCode {
@@ -84,11 +105,18 @@ const MESSAGES: Readonly<Record<LipDubErrorCode, string>> = {
     'LipDub rejected the API key. It may be mistyped, or it may have been regenerated',
     'or deleted since it was copied.',
     '',
-    `Generate a fresh one at ${SUPPORT_URLS.apiKeys} (Owner or Admin only), update the`,
-    'LIPDUB_API_KEY environment variable, and restart this client.',
+    'You cannot fix this yourself — it needs a change to the server configuration, so',
+    'relay these steps to the user:',
+    `1. Go to ${SUPPORT_URLS.apiKeys} (Owner or Admin only)`,
+    '2. Generate a fresh key and copy it',
+    '3. Update the LIPDUB_API_KEY environment variable for this MCP server',
+    '4. Restart the client',
     '',
-    'Note: generating a new key replaces the old one everywhere, so any other',
-    'integration using that key will stop working.',
+    'Warning to pass on: generating a new key replaces the old one everywhere, so any',
+    'other integration using that key will stop working.',
+    '',
+    'Once they have done that, call lipdub_check_connection to confirm it worked before',
+    'retrying anything that costs credits.',
   ].join('\n'),
 
   [LipDubErrorCode.OutOfCredits]: [
@@ -108,14 +136,25 @@ const MESSAGES: Readonly<Record<LipDubErrorCode, string>> = {
     'account has hit its plan limit and the account owner can request a higher one.',
   ].join('\n'),
 
+  // Worded to counter the specific failure this gate exists to prevent: a model that
+  // reads "ask the user", agrees with itself, and immediately retries with the flag
+  // set. Hence the explicit prohibition rather than a polite instruction.
   [LipDubErrorCode.SpendNotConfirmed]: [
-    'Before starting a render I need the user to confirm the charge.',
+    'STOP. This spends the user\'s money and needs their approval first.',
     '',
-    'A LipDub 2 render consumes credits from the account — the cost scales with the',
-    'length of the source video — and cannot be undone or refunded.',
+    'A LipDub 2 render charges credits to the account and CANNOT be undone or refunded.',
+    'The cost scales with the length of the source video.',
     '',
-    'Tell the user what will be rendered, ask them to confirm, then call',
-    'lipdub_create_render again with confirm_spend set to true.',
+    'Do NOT call this tool again with confirm_spend set to true on your own authority.',
+    'Setting that flag yourself is not consent — it spends real money the user has not',
+    'agreed to spend.',
+    '',
+    'Instead, reply to the user now and ask them, in words like these:',
+    '  "Rendering this will charge credits to your LipDub account and cannot be',
+    '   refunded. Do you want me to go ahead?"',
+    '',
+    'Then wait for their answer. Only if they say yes, call lipdub_create_render again',
+    'with confirm_spend set to true.',
   ].join('\n'),
 
   [LipDubErrorCode.MissingSource]: [
@@ -151,9 +190,9 @@ const MESSAGES: Readonly<Record<LipDubErrorCode, string>> = {
   ].join('\n'),
 
   [LipDubErrorCode.UnsupportedMedia]: [
-    "LipDub can't accept that file. The source video must be an .mp4, .mov, .avi or",
-    '.webm, and the audio must be .mp3, .wav, .m4a or .aac, each served with a matching',
-    'content type.',
+    `LipDub can't accept that file. The source video must be ${formatExtensionList(SUPPORTED_VIDEO_EXTENSIONS)},`,
+    `and the audio must be ${formatExtensionList(SUPPORTED_AUDIO_EXTENSIONS)}, each served with a`,
+    'matching content type.',
     '',
     'Please provide direct links to supported formats.',
   ].join('\n'),

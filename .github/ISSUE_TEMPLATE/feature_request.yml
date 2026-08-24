@@ -1,0 +1,38 @@
+name: Feature request
+description: Suggest a capability or an improvement
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Two things worth knowing before you write, because they come up often:
+
+        - **Local file upload** is not supported on purpose. The upload endpoints are
+          rate-limited to roughly ten requests an hour, which works out at about two
+          local-file renders per hour, and a hosted build of this server could never
+          reach your filesystem at all. Host the file and pass a URL instead.
+        - **Translation** is not something LipDub 2 does. You supply finished audio.
+          Generating speech is a job for a text-to-speech tool, and this server is
+          designed to compose with one.
+
+        If your request is one of those, it is still welcome — but please say what
+        the above does not solve for you, so it is clear what would actually help.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the goal rather than the feature, so alternatives stay open.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to see?
+      description: If it involves a new tool, what would you want it to be called and do?
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What have you tried instead?

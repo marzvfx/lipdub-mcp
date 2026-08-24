@@ -8,6 +8,10 @@ version. New capability arrives as new tools, and input schema changes are addit
 
 ## [Unreleased]
 
+## [0.1.0] — 2026-08-25
+
+First release.
+
 ### Added
 
 - Initial server with five tools: `lipdub_check_connection`, `lipdub_create_render`,

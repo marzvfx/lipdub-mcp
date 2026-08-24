@@ -62,7 +62,7 @@ const TROUBLESHOOTING = `# LipDub 2 troubleshooting
 | "could not download one of your source files" | Link is a share page, needs a login, or expired | Use a direct link that returns the file itself |
 | "downloaded your files but could not start the render" | Usually no credits, or no clearly visible speaking face | Check the balance, then try a different source video |
 | "timed out while preparing your files" | A source URL was very slow | Use smaller files or faster hosting |
-| Wait tool returned \`timed_out_waiting\` | Normal — renders take ${TYPICAL_RENDER_DURATION_TEXT} | Not a failure. Call the wait tool again with the same render id |
+| Wait tool returned \`still_running\` | Normal — renders take ${TYPICAL_RENDER_DURATION_TEXT} | Not a failure. Call the wait tool again with the same render id |
 | Download link stopped working | Links are signed and short-lived | Call \`lipdub_get_render\` again for a fresh link |
 
 ## Rate limits

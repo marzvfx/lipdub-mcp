@@ -24,6 +24,15 @@ export async function startStdioServer(): Promise<void> {
     );
   }
 
+  // Turning the spend gate off is legitimate for an unattended pipeline, but it is
+  // exactly the kind of setting that gets copied into a shared config and forgotten.
+  // Say so once at startup so it shows up in the client's server log.
+  if (!context.requireSpendConfirmation) {
+    context.logger.warn(
+      'spend confirmation is DISABLED: renders will start without asking the user and will charge credits. Only safe when no human is watching.',
+    );
+  }
+
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }

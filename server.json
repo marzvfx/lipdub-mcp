@@ -35,6 +35,18 @@
           "description": "Whether a render must be explicitly confirmed before it spends credits. Defaults to true; set false only for headless pipelines.",
           "isRequired": false,
           "isSecret": false
+        },
+        {
+          "name": "LIPDUB_API_KEY_FILE",
+          "description": "Path to a file containing the API key, as an alternative to LIPDUB_API_KEY.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "LIPDUB_LOG_LEVEL",
+          "description": "Logging verbosity: debug, info, warn (the default) or error. Logs are written to stderr.",
+          "isRequired": false,
+          "isSecret": false
         }
       ]
     }

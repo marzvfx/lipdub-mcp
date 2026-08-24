@@ -93,7 +93,7 @@ const inputSchema = {
     .boolean()
     .default(false)
     .describe(
-      'Set true only after the user has explicitly agreed to spend credits on this render.',
+      'Whether the user has personally approved spending credits on this render. Defaults to false deliberately, as a safety gate — it is not a misconfiguration. Set it to true only after you have asked the user and they have agreed. Setting it yourself without asking spends their money without consent.',
     ),
   video_id: z
     .number()

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/marzvfx/lipdub-mcp/security/advisories/new
+    about: Report privately, never as a public issue. See SECURITY.md.
+  - name: Question about the LipDub API itself
+    url: https://lipdub.readme.io/
+    about: API reference and guides for the underlying REST API.
+  - name: Billing, credits or account access
+    url: https://app.lipdub.ai
+    about: Credit balance, plans and API key management live in the LipDub web app.

@@ -2,7 +2,13 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    // Source maps are useful locally but must not ship. `files` in package.json
+    // includes all of dist/, and a .js.map embeds the original TypeScript paths and
+    // lets anyone reconstruct the source from the published tarball — which is more
+    // of our implementation than a public client needs to hand out.
+    "sourceMap": false,
+    "declarationMap": false
   },
   "include": ["src/**/*.ts"]
 }

@@ -37,14 +37,17 @@ export enum HandleKind {
   Tracking = 'tracking',
 }
 
-/** A parsed handle. */
-export interface ParsedHandle {
-  kind: HandleKind;
-  /** Numeric job id when `kind` is `RenderJob`. */
-  jobId?: number;
-  /** Tracking id when `kind` is `Tracking`. */
-  trackingId?: string;
-}
+/**
+ * A parsed handle.
+ *
+ * A discriminated union rather than one interface with two optional fields, so the
+ * compiler knows which identifier is present once `kind` has been checked. That
+ * removes the casts callers would otherwise need, and if a third handle kind is ever
+ * added the compiler will point at every place that has to handle it.
+ */
+export type ParsedHandle =
+  | { kind: HandleKind.RenderJob; jobId: number }
+  | { kind: HandleKind.Tracking; trackingId: string };
 
 /** Raised when a handle cannot be interpreted. */
 export class InvalidHandleError extends Error {}
