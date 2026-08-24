@@ -23,6 +23,9 @@ export const REQUIRE_SPEND_CONFIRMATION_ENV_VAR = 'LIPDUB_REQUIRE_SPEND_CONFIRMA
 /** Environment variable capping how many renders one process may start. */
 export const MAX_RENDERS_PER_SESSION_ENV_VAR = 'LIPDUB_MAX_RENDERS_PER_SESSION';
 
+/** Environment variable selecting logging verbosity. */
+export const LOG_LEVEL_ENV_VAR = 'LIPDUB_LOG_LEVEL';
+
 /** Header carrying the API key. */
 export const API_KEY_HEADER = 'X-Api-Key';
 

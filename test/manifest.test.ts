@@ -5,6 +5,7 @@ import {
   API_BASE_URL_ENV_VAR,
   API_KEY_ENV_VAR,
   API_KEY_FILE_ENV_VAR,
+  LOG_LEVEL_ENV_VAR,
   MAX_RENDERS_PER_SESSION_ENV_VAR,
   REQUIRE_SPEND_CONFIRMATION_ENV_VAR,
 } from '../src/lipdub/constants.js';
@@ -53,7 +54,7 @@ describe('server.json', () => {
       API_KEY_FILE_ENV_VAR,
       MAX_RENDERS_PER_SESSION_ENV_VAR,
       REQUIRE_SPEND_CONFIRMATION_ENV_VAR,
-      'LIPDUB_LOG_LEVEL',
+      LOG_LEVEL_ENV_VAR,
     ];
 
     for (const name of userFacing) {

@@ -1,3 +1,4 @@
+import { LOG_LEVEL_ENV_VAR } from './lipdub/constants.js';
 import { redactSecrets } from './redaction/redact.js';
 
 /**
@@ -71,7 +72,7 @@ export class Logger {
     environment: NodeJS.ProcessEnv,
     secrets: readonly (string | undefined)[] = [],
   ): Logger {
-    return new Logger(parseLogLevel(environment.LIPDUB_LOG_LEVEL), secrets);
+    return new Logger(parseLogLevel(environment[LOG_LEVEL_ENV_VAR]), secrets);
   }
 
   debug(message: string, fields?: LogFields): void {
