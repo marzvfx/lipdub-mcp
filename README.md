@@ -55,6 +55,10 @@ Claude: Started — render_id rnd_88213. This usually takes 7–15 minutes; I'll
 
 ### 2. Add the server
 
+> **Not on npm yet.** The `npx` commands below are how this will work once the
+> package is published. Until then, use the from-source option at the end of this
+> section — it behaves identically.
+
 <details open>
 <summary><b>Claude Code</b></summary>
 
@@ -144,9 +148,42 @@ env = { LIPDUB_API_KEY = "your_key_here" }
 ```
 </details>
 
+<details>
+<summary><b>From source</b> — works today, before the npm release</summary>
+
+```bash
+git clone https://github.com/marzvfx/lipdub-mcp.git
+cd lipdub-mcp
+npm ci && npm run build
+```
+
+Then point your client at the built entry point:
+
+```json
+{
+  "mcpServers": {
+    "lipdub": {
+      "command": "node",
+      "args": ["/absolute/path/to/lipdub-mcp/dist/index.js"],
+      "env": { "LIPDUB_API_KEY": "your_key_here" }
+    }
+  }
+}
+```
+
+Needs Node 20+. If you would rather not install Node, `./manage.sh build` does the
+same thing inside a container.
+</details>
+
 ### 3. Check it works
 
 Ask your agent: **"check my LipDub connection"**.
+
+You can also sanity-check the server on its own:
+
+```bash
+npx lipdub-mcp --version    # or: node dist/index.js --version
+```
 
 ---
 
