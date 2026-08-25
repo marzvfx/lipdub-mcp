@@ -202,6 +202,11 @@ LIPDUB_API_KEY=your_key_here npm run smoke -- --render \
 
 It starts the render, waits for it, and prints the download link.
 
+If you already have assets uploaded to LipDub, pass their ids instead of URLs with
+`--video-id=<shot id> --audio-id=<upload id>` — useful when you have no public hosting
+to hand. And if a run is interrupted, `--render-id=<id>` re-attaches to the render
+that is already going rather than paying for a second one.
+
 ---
 
 ## Tools

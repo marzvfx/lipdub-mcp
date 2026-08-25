@@ -20,25 +20,49 @@ import { toErrorResult, toTextResult } from './result.js';
  * failed — when in fact it is still running and the credits are already spent.
  */
 
-/** Default wait, comfortably inside mainstream client tool timeouts. */
-const DEFAULT_MAX_WAIT_SECONDS = 240;
+/**
+ * Default wait.
+ *
+ * This has to stay under the CLIENT's request timeout, not just under something that
+ * feels reasonable. The MCP SDK's default is 60 seconds
+ * (`DEFAULT_REQUEST_TIMEOUT_MSEC`), so a longer default here means the client gives up
+ * and reports an error while the render is progressing perfectly well — which is
+ * exactly the false failure this tool exists to prevent. 45 seconds leaves headroom
+ * for the round trip.
+ *
+ * A real end-to-end run is what caught this: every unit test passed with a 240-second
+ * default, because none of them went through a client that enforces a timeout.
+ */
+export const DEFAULT_MAX_WAIT_SECONDS = 45;
 
-/** Hard ceiling. Beyond this, a client timeout becomes the likely outcome. */
+/**
+ * Hard ceiling.
+ *
+ * Only reachable on clients configured with a longer request timeout, or clients that
+ * reset the timeout on progress notifications. Callers opt into that explicitly.
+ */
 const MAXIMUM_MAX_WAIT_SECONDS = 600;
 
 /** Floor, so a caller cannot turn this into a busy loop. */
 const MINIMUM_MAX_WAIT_SECONDS = 10;
 
-/** How often progress is reported while waiting. */
-const PROGRESS_INTERVAL_SECONDS = 15;
+/**
+ * How often progress is reported while waiting.
+ *
+ * Also the interval at which a client using `resetTimeoutOnProgress` refreshes its
+ * timeout, so it is kept well below the 60-second floor rather than tuned purely for
+ * how often a human wants an update.
+ */
+const PROGRESS_INTERVAL_SECONDS = 10;
 
 const DESCRIPTION = [
   'Wait for a LipDub render to finish, then return its download link. Use this straight',
   'after lipdub_create_render instead of checking in a loop — it uses far less context.',
   '',
   `This call blocks for up to max_wait_seconds (default ${DEFAULT_MAX_WAIT_SECONDS},`,
-  `maximum ${MAXIMUM_MAX_WAIT_SECONDS}) while tracking the render for you. A typical`,
-  `render takes ${TYPICAL_RENDER_DURATION_TEXT}, so one call is often not enough.`,
+  `maximum ${MAXIMUM_MAX_WAIT_SECONDS}) while tracking the render for you. A render`,
+  `takes ${TYPICAL_RENDER_DURATION_TEXT}, so expect to call this several times — that`,
+  'is normal and costs nothing.',
   '',
   'If the render is still going when the wait is up, this returns normally with',
   'still_running set to true. That is NOT an error and NOT a failure — the render is',
@@ -68,7 +92,7 @@ export function registerWaitForRenderTool(server: McpServer, context: ServerCont
           .max(MAXIMUM_MAX_WAIT_SECONDS)
           .default(DEFAULT_MAX_WAIT_SECONDS)
           .describe(
-            'How long to wait before returning. Returning early with still_running set to true is normal, not a failure.',
+            `How long to wait before returning. Returning early with still_running set to true is normal, not a failure. The default of ${DEFAULT_MAX_WAIT_SECONDS} stays under the 60-second request timeout most MCP clients use; only raise it if your client is configured to wait longer.`,
           ),
       },
       annotations: {

@@ -6,6 +6,8 @@ import { LipDubClient } from '../src/lipdub/client.js';
 import { RenderService } from '../src/lipdub/renders.js';
 import { Logger, LogLevel } from '../src/logging.js';
 import { createServer } from '../src/server.js';
+import { DEFAULT_MAX_WAIT_SECONDS } from '../src/tools/wait-for-render.js';
+import { DEFAULT_REQUEST_TIMEOUT_MSEC } from '@modelcontextprotocol/sdk/shared/protocol.js';
 
 /**
  * Tool-level tests driven through a real MCP client over an in-memory transport.
@@ -312,6 +314,13 @@ describe('download links', () => {
 });
 
 describe('waiting', () => {
+  it('defaults to a wait shorter than the client request timeout', () => {
+    // Found by a real end-to-end run, not by any unit test: the default used to be
+    // 240s against a 60s client timeout, so every default wait_for_render call failed
+    // on a stock client while the render was progressing perfectly well.
+    expect(DEFAULT_MAX_WAIT_SECONDS * 1000).toBeLessThan(DEFAULT_REQUEST_TIMEOUT_MSEC);
+  });
+
   it('returns the finished result when the render completes during the wait', async () => {
     const { client } = await connect({
       '/v1/renders/7/status': { body: { data: { status: 'finished', generate_id: 7 } } },

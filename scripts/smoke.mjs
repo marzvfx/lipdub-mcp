@@ -14,7 +14,10 @@
  *   npm run smoke -- --render  the whole flow, including a real render. SPENDS CREDITS
  *                              from the account the key belongs to.
  *
- * Requires LIPDUB_API_KEY. --render also requires --video=<url> and --audio=<url>.
+ * Requires LIPDUB_API_KEY. --render needs media, given either as public URLs
+ * (--video=<url> --audio=<url>) or as ids from an earlier upload
+ * (--video-id=<shot id> --audio-id=<upload id>), which is handy when you have no
+ * public hosting to hand.
  */
 
 import { existsSync } from 'node:fs';
@@ -32,6 +35,9 @@ const ENTRY_POINT = join(REPOSITORY_ROOT, 'dist', 'index.js');
 
 /** How long to keep waiting for a render before giving up and reporting the id. */
 const RENDER_WAIT_BUDGET_SECONDS = 30 * 60;
+
+/** Server-side wait per call. Longer than the tool's chat-safe default, on purpose. */
+const WAIT_PER_CALL_SECONDS = 300;
 
 function argValue(name, fallback) {
   const hit = process.argv.find((arg) => arg.startsWith(`--${name}=`));
@@ -74,15 +80,25 @@ async function main() {
   const wantsRender = process.argv.includes('--render');
   const videoUrl = argValue('video', '');
   const audioUrl = argValue('audio', '');
+  const videoId = argValue('video-id', '');
+  const audioId = argValue('audio-id', '');
+  // Lets you re-attach to a render that is already running, so a crashed or
+  // interrupted run does not mean paying for another one.
+  const existingRenderId = argValue('render-id', '');
 
-  if (wantsRender && (!videoUrl || !audioUrl)) {
+  const hasVideo = Boolean(videoUrl || videoId);
+  const hasAudio = Boolean(audioUrl || audioId);
+
+  if (wantsRender && !existingRenderId && (!hasVideo || !hasAudio)) {
     process.stderr.write(
       '--render needs media to render.\n\n' +
         'Supply a video of one person speaking and the audio they should appear to say,\n' +
-        'both as public URLs (a YouTube link works for the video):\n\n' +
+        'either as public URLs (a YouTube link works for the video):\n\n' +
         '  npm run smoke -- --render \\\n' +
         '    --video=https://example.com/speaker.mp4 \\\n' +
-        '    --audio=https://example.com/speech.mp3\n',
+        '    --audio=https://example.com/speech.mp3\n\n' +
+        'or as ids from an earlier upload:\n\n' +
+        '  npm run smoke -- --render --video-id=913772 --audio-id=<upload id>\n',
     );
     process.exitCode = 2;
     return;
@@ -127,11 +143,26 @@ async function main() {
       return;
     }
 
-    process.stdout.write(`\nStarting a real render. This SPENDS CREDITS.\n  video: ${videoUrl}\n  audio: ${audioUrl}\n\n`);
+    let renderId = existingRenderId;
+
+    if (renderId) {
+      process.stdout.write(`\nAttaching to existing render ${renderId}. No new spend.\n\n`);
+    } else {
+    process.stdout.write(
+      `\nStarting a real render. This SPENDS CREDITS.\n` +
+        `  video: ${videoUrl || `id ${videoId}`}\n` +
+        `  audio: ${audioUrl || `id ${audioId}`}\n\n`,
+    );
+
+    const renderArgs = { confirm_spend: true };
+    if (videoUrl) renderArgs.video_url = videoUrl;
+    else renderArgs.video_id = Number(videoId);
+    if (audioUrl) renderArgs.audio_url = audioUrl;
+    else renderArgs.audio_id = audioId;
 
     const created = await client.callTool({
       name: 'lipdub_create_render',
-      arguments: { video_url: videoUrl, audio_url: audioUrl, confirm_spend: true },
+      arguments: renderArgs,
     });
     const started = created.isError !== true;
     report('render started', started, textOf(created));
@@ -140,15 +171,28 @@ async function main() {
       return;
     }
 
-    const renderId = created.structuredContent?.render_id;
+      renderId = created.structuredContent?.render_id;
+    }
+
     let waited = 0;
     let final = null;
 
     while (waited < RENDER_WAIT_BUDGET_SECONDS) {
-      const waitResult = await client.callTool({
-        name: 'lipdub_wait_for_render',
-        arguments: { render_id: renderId, max_wait_seconds: 300 },
-      });
+      const waitResult = await client.callTool(
+        {
+          name: 'lipdub_wait_for_render',
+          arguments: { render_id: renderId, max_wait_seconds: WAIT_PER_CALL_SECONDS },
+        },
+        undefined,
+        // The client's own timeout has to outlast the server-side wait, or the client
+        // gives up first and reports a healthy render as failed. This script can
+        // afford to wait; a chat client generally cannot, which is why the tool's own
+        // default is deliberately much shorter.
+        {
+          timeout: (WAIT_PER_CALL_SECONDS + 30) * 1000,
+          resetTimeoutOnProgress: true,
+        },
+      );
 
       if (waitResult.isError === true) {
         report('waiting for render', false, textOf(waitResult));
@@ -162,7 +206,7 @@ async function main() {
         break;
       }
 
-      waited += Number(structured.waited_seconds ?? 300);
+      waited += Number(structured.waited_seconds ?? WAIT_PER_CALL_SECONDS);
       process.stdout.write(`      still ${structured.status} after ~${waited}s...\n`);
     }
 
