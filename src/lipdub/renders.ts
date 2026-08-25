@@ -44,7 +44,6 @@ export interface CreateRenderInput {
   audioUrl?: string;
   audioId?: string;
   outputFilename: string;
-  transcript?: string;
   callbackUrl?: string;
 }
 
@@ -81,7 +80,6 @@ export class RenderService {
     if (input.videoId !== undefined) requestBody.video_id = input.videoId;
     if (input.audioUrl !== undefined) requestBody.audio_url = input.audioUrl;
     if (input.audioId !== undefined) requestBody.audio_id = input.audioId;
-    if (input.transcript !== undefined) requestBody.transcript = input.transcript;
     if (input.callbackUrl !== undefined) requestBody.callback_url = input.callbackUrl;
 
     const body = await this.client.post<Record<string, unknown>>('/v1/renders', requestBody);

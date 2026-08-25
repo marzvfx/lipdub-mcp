@@ -4,7 +4,6 @@ import { ServerContext } from '../context.js';
 import {
   formatExtensionList,
   MAX_OUTPUT_FILENAME_LENGTH,
-  MAX_TRANSCRIPT_LENGTH,
   MAX_URL_LENGTH,
   RESOLVABLE_VIDEO_HOSTS,
   SUPPORT_URLS,
@@ -79,13 +78,6 @@ const inputSchema = {
     .optional()
     .describe(
       "Optional name for the finished file, e.g. 'ceo-welcome-spanish.mp4'. If omitted, a name is derived from video_url. This name is also shown as the project name in the user's LipDub web app, so make it meaningful.",
-    ),
-  transcript: z
-    .string()
-    .max(MAX_TRANSCRIPT_LENGTH)
-    .optional()
-    .describe(
-      'Optional. The words spoken in audio_url. Supplying this can improve lip-sync accuracy.',
     ),
   callback_url: z
     .string()
@@ -170,7 +162,6 @@ export function registerCreateRenderTool(server: McpServer, context: ServerConte
           audioUrl: audio.url,
           audioId: audio.id as string | undefined,
           outputFilename,
-          transcript: args.transcript,
           callbackUrl: args.callback_url,
         });
 

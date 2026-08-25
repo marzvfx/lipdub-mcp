@@ -55,9 +55,6 @@ export const HTTP_TIMEOUT_MILLISECONDS = 30_000;
 /** Longest `output_filename` accepted. Also becomes the project name upstream. */
 export const MAX_OUTPUT_FILENAME_LENGTH = 200;
 
-/** Longest transcript accepted, mirroring the upstream cap. */
-export const MAX_TRANSCRIPT_LENGTH = 4096;
-
 /** Longest URL accepted, mirroring the upstream cap. */
 export const MAX_URL_LENGTH = 2048;
 
