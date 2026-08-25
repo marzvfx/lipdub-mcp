@@ -6,6 +6,15 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
+    // Plain .mjs helper scripts get their Node globals from the runtime rather than
+    // from @types/node, so they have to be declared here or every `process` reference
+    // is reported as undefined.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: { process: 'readonly', console: 'readonly' },
+    },
+  },
+  {
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       // Upstream JSON is genuinely unknown at the boundary; we narrow it explicitly
