@@ -38,7 +38,16 @@ jobs:
           fi
 
       - name: Publish to npm with provenance
-        run: npm publish --provenance --access public
+        # Skip rather than fail when the version is already on the registry. The first
+        # release was published by hand to claim the name, so without this a tag push
+        # for that same version turns the whole release red for no real reason.
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if npm view "lipdub-mcp@${version}" version >/dev/null 2>&1; then
+            echo "::notice::lipdub-mcp@${version} is already published; skipping."
+            exit 0
+          fi
+          npm publish --provenance --access public
 
       - name: Create the GitHub Release
         # A tag alone is not a release: without this, the version is invisible on the
@@ -73,9 +82,22 @@ jobs:
         # DNS verification against a TXT record on lipdub.ai. The signing key is held
         # as a secret; the domain proves first-party ownership in a way the
         # io.github.* namespace cannot.
+        #
+        # Registry listing is discovery, not distribution: npm is what makes the server
+        # installable. So when the namespace is not yet set up, say so and stop rather
+        # than failing a release that otherwise succeeded.
+        id: auth
         env:
           MCP_PRIVATE_KEY: ${{ secrets.MCP_REGISTRY_PRIVATE_KEY }}
-        run: ./mcp-publisher login dns --domain lipdub.ai --private-key "${MCP_PRIVATE_KEY}"
+        run: |
+          if [ -z "${MCP_PRIVATE_KEY}" ]; then
+            echo "::warning::MCP_REGISTRY_PRIVATE_KEY is not set; skipping MCP registry listing."
+            echo "ready=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          ./mcp-publisher login dns --domain lipdub.ai --private-key "${MCP_PRIVATE_KEY}"
+          echo "ready=true" >> "${GITHUB_OUTPUT}"
 
       - name: Publish
+        if: steps.auth.outputs.ready == 'true'
         run: ./mcp-publisher publish

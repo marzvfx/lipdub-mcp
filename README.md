@@ -53,33 +53,15 @@ Claude: Started — render_id rnd_88213. A clip this length takes a few minutes;
 > integration, generating a fresh key will break it. Reuse the existing key, or use a
 > separate Owner/Admin account for agent work.
 
-### 2. Install the server
+### 2. Point your client at it
 
-```bash
-git clone https://github.com/marzvfx/lipdub-mcp.git
-cd lipdub-mcp
-npm ci && npm run build
-```
-
-Needs **Node 20 or newer**. No Node on your machine? `./manage.sh build` does the same
-thing inside a container.
-
-That gives you `dist/index.js`. Note its full path — `pwd` will tell you — and use it
-below wherever you see `/path/to/lipdub-mcp`.
-
-> Once we publish to npm you will be able to skip this step and use
-> `npx -y lipdub-mcp` as the command instead, with no clone and no build. Everything
-> else stays the same.
-
-### 3. Point your client at it
+Nothing to install — `npx` fetches it on first run.
 
 <details open>
 <summary><b>Claude Code</b></summary>
 
 ```bash
-claude mcp add lipdub \
-  --env LIPDUB_API_KEY=your_key_here \
-  -- node /path/to/lipdub-mcp/dist/index.js
+claude mcp add lipdub --env LIPDUB_API_KEY=your_key_here -- npx -y lipdub-mcp
 ```
 </details>
 
@@ -90,8 +72,8 @@ claude mcp add lipdub \
 {
   "mcpServers": {
     "lipdub": {
-      "command": "node",
-      "args": ["/path/to/lipdub-mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "lipdub-mcp"],
       "env": { "LIPDUB_API_KEY": "your_key_here" }
     }
   }
@@ -110,8 +92,8 @@ Desktop after editing it.
 {
   "mcpServers": {
     "lipdub": {
-      "command": "node",
-      "args": ["/path/to/lipdub-mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "lipdub-mcp"],
       "env": { "LIPDUB_API_KEY": "your_key_here" }
     }
   }
@@ -129,8 +111,8 @@ Desktop after editing it.
   ],
   "servers": {
     "lipdub": {
-      "command": "node",
-      "args": ["/path/to/lipdub-mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "lipdub-mcp"],
       "env": { "LIPDUB_API_KEY": "${input:lipdub-key}" }
     }
   }
@@ -148,8 +130,8 @@ key per user, that matters more here than it does for most servers.
 {
   "mcpServers": {
     "lipdub": {
-      "command": "node",
-      "args": ["/path/to/lipdub-mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "lipdub-mcp"],
       "env": { "LIPDUB_API_KEY": "your_key_here" }
     }
   }
@@ -162,18 +144,32 @@ key per user, that matters more here than it does for most servers.
 
 ```toml
 [mcp_servers.lipdub]
-command = "node"
-args = ["/path/to/lipdub-mcp/dist/index.js"]
+command = "npx"
+args = ["-y", "lipdub-mcp"]
 env = { LIPDUB_API_KEY = "your_key_here" }
 ```
 </details>
 
-### 4. Check it works
+<details>
+<summary><b>From source</b> — for development, or if you'd rather not use npx</summary>
+
+```bash
+git clone https://github.com/marzvfx/lipdub-mcp.git
+cd lipdub-mcp
+npm ci && npm run build
+```
+
+Then use `"command": "node", "args": ["/absolute/path/to/lipdub-mcp/dist/index.js"]`
+instead of the `npx` pair above. Needs Node 20+; `./manage.sh build` does the same
+inside a container if you have no Node.
+</details>
+
+### 3. Check it works
 
 First confirm the server itself runs:
 
 ```bash
-node /path/to/lipdub-mcp/dist/index.js --version
+npx -y lipdub-mcp --version
 ```
 
 Then ask your agent: **"check my LipDub connection"**. It should reply with your
@@ -183,7 +179,8 @@ check the `env` block above and restart the client.
 #### Or test it without an agent
 
 There is a smoke test that drives the server exactly as a real MCP client does, so a
-pass means your installation genuinely works:
+pass means your installation genuinely works. It lives in the repo, so clone it first
+(see *From source* above), then:
 
 ```bash
 LIPDUB_API_KEY=your_key_here npm run smoke
