@@ -62,7 +62,7 @@ export function describeState(state: RenderState): string {
 
   lines.push(
     '',
-    `Not finished yet. A render takes about ${TYPICAL_RENDER_DURATION_TEXT} in total.`,
+    `Not finished yet. A render takes ${TYPICAL_RENDER_DURATION_TEXT}.`,
     `Call lipdub_wait_for_render with render_id "${state.renderId}", or wait about`,
     `${state.nextPollSeconds} seconds and check again. Checking is free and never rate-limited.`,
   );

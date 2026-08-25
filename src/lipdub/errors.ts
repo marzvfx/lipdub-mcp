@@ -15,27 +15,12 @@
  */
 
 import {
+  formatExtensionList,
+  MAX_SOURCE_FILE_SIZE_TEXT,
   SUPPORT_URLS,
   SUPPORTED_AUDIO_EXTENSIONS,
   SUPPORTED_VIDEO_EXTENSIONS,
 } from './constants.js';
-
-/**
- * Render an extension list as readable prose, e.g. ".mp4, .mov or .webm".
- *
- * The supported formats are named in several messages and in the docs. Deriving the
- * prose from the single constant keeps them from drifting apart when a format is
- * added, which is exactly the kind of thing nobody remembers to update by hand.
- *
- * @param extensions Extensions to list, in the order they should be shown.
- * @returns A comma-separated list with "or" before the final entry.
- */
-function formatExtensionList(extensions: readonly string[]): string {
-  if (extensions.length <= 1) {
-    return extensions[0] ?? '';
-  }
-  return `${extensions.slice(0, -1).join(', ')} or ${extensions[extensions.length - 1]}`;
-}
 
 /** Stable machine-readable codes. Safe to expose; they name no internal component. */
 export enum LipDubErrorCode {
@@ -200,10 +185,13 @@ const MESSAGES: Readonly<Record<LipDubErrorCode, string>> = {
   [LipDubErrorCode.SourceDownloadFailed]: [
     'LipDub could not download one of your source files. Nothing was charged.',
     '',
-    'Both links must be direct and publicly reachable, and must return the media file',
-    'itself rather than a web page. The usual causes are a Google Drive, Dropbox or',
-    'YouTube share page instead of a direct file link, a link that requires a login, or',
-    'a link that has expired.',
+    'Both links must be publicly reachable, and must return the media file itself',
+    'rather than a web page. YouTube links are the exception — those are resolved for',
+    'you and do work.',
+    '',
+    'The usual causes are a Google Drive or Dropbox share page instead of a direct file',
+    'link, a link that requires a login, a link that has expired, or a file larger than',
+    `${MAX_SOURCE_FILE_SIZE_TEXT}.`,
     '',
     'Check both URLs and call lipdub_create_render again.',
   ].join('\n'),

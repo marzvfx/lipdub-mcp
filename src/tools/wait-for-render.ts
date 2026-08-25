@@ -10,10 +10,10 @@ import { toErrorResult, toTextResult } from './result.js';
 /**
  * Bounded server-side wait.
  *
- * A render takes 7–15 minutes, which is longer than every mainstream client's default
- * tool timeout, so this deliberately does NOT wait for the whole render. It waits for
- * a bounded window and then returns normally, which turns fifteen polling turns into
- * one or two calls without ever outliving the client's patience.
+ * A render outlasts every mainstream client's default tool timeout, so this
+ * deliberately does NOT wait for the whole render. It waits for a bounded window and
+ * then returns normally, which turns many polling turns into one or two calls without
+ * ever outliving the client's patience.
  *
  * The single most important line in this file is the "NOT an error" wording. Without
  * it, a model that receives a timeout result reliably tells the user the render
@@ -112,7 +112,7 @@ export function registerWaitForRenderTool(server: McpServer, context: ServerCont
                   progressToken,
                   progress: waitedSeconds,
                   total: args.max_wait_seconds,
-                  message: `Render is ${state.status} — usually ${TYPICAL_RENDER_DURATION_TEXT} in total.`,
+                  message: `Render is ${state.status} — usually ${TYPICAL_RENDER_DURATION_TEXT}.`,
                 },
               });
             } catch (notificationError) {
@@ -143,7 +143,7 @@ export function registerWaitForRenderTool(server: McpServer, context: ServerCont
         // still running and already paid for.
         const text = [
           `NOT an error and NOT a failure: the render is still ${state.status} after ${waitedSeconds} seconds,`,
-          `which is normal — a render takes about ${TYPICAL_RENDER_DURATION_TEXT} in total.`,
+          `which is normal — a render takes ${TYPICAL_RENDER_DURATION_TEXT}.`,
           '',
           `render_id: ${state.renderId}`,
           `status: ${state.status}`,

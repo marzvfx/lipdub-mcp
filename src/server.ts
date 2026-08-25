@@ -37,7 +37,7 @@ const INSTRUCTIONS = [
   '',
   'Both inputs are given as public URLs, not local file paths.',
   '',
-  `Renders take about ${TYPICAL_RENDER_DURATION_TEXT} and consume credits from the`,
+  `Renders take ${TYPICAL_RENDER_DURATION_TEXT}, and consume credits from the`,
   "user's LipDub account. Checking status is free and never rate-limited, so check as",
   'often as you like.',
   '',

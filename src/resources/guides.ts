@@ -1,5 +1,14 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { SUPPORT_URLS, TYPICAL_RENDER_DURATION_TEXT } from '../lipdub/constants.js';
+import {
+  formatExtensionList,
+  MAX_SOURCE_FILE_SIZE_TEXT,
+  RESOLVABLE_VIDEO_HOSTS,
+  SOURCE_INGEST_TIMEOUT_TEXT,
+  SUPPORT_URLS,
+  SUPPORTED_AUDIO_EXTENSIONS,
+  SUPPORTED_VIDEO_EXTENSIONS,
+  TYPICAL_RENDER_DURATION_TEXT,
+} from '../lipdub/constants.js';
 
 /**
  * Long-form guidance, served as resources.
@@ -28,7 +37,7 @@ text-to-speech or voice-cloning tool, host it at a public URL, and pass that URL
 
 1. \`lipdub_check_connection\` — confirm the API key works.
 2. \`lipdub_create_render\` — pass \`video_url\` and \`audio_url\`. Charges credits.
-3. \`lipdub_wait_for_render\` — takes about ${TYPICAL_RENDER_DURATION_TEXT}.
+3. \`lipdub_wait_for_render\` — takes ${TYPICAL_RENDER_DURATION_TEXT}.
 4. The finished result comes back as a temporary signed download link.
 
 If you lose the render id, \`lipdub_list_renders\` will find it.
@@ -36,10 +45,16 @@ If you lose the render id, \`lipdub_list_renders\` will find it.
 ## Inputs
 
 Both sides are **public URLs**, not local files. The link must return the media file
-itself. These do not work: Google Drive / Dropbox / YouTube share pages, and anything
-behind a login.
+itself — with one exception: **YouTube links work** (${formatExtensionList(RESOLVABLE_VIDEO_HOSTS)}),
+because they are resolved for you. Google Drive and Dropbox share pages, and anything
+behind a login, do not work.
 
-Video: \`.mp4\`, \`.mov\`, \`.avi\`, \`.webm\`. Audio: \`.mp3\`, \`.wav\`, \`.m4a\`, \`.aac\`.
+Video: ${formatExtensionList(SUPPORTED_VIDEO_EXTENSIONS)}.
+Audio: ${formatExtensionList(SUPPORTED_AUDIO_EXTENSIONS)} (\`.mp4\` and \`.mov\` are accepted
+here too, since those containers can carry an audio-only track).
+
+Sources are capped at ${MAX_SOURCE_FILE_SIZE_TEXT}, and LipDub waits up to
+${SOURCE_INGEST_TIMEOUT_TEXT} for both downloads before giving up.
 
 A good source video shows **one** person, face clearly visible and well lit.
 

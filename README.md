@@ -29,7 +29,7 @@ Claude: I'll use LipDub 2 for that. This will charge credits to your LipDub
 
 You:   yes
 
-Claude: Started — render_id rnd_88213. This usually takes 7–15 minutes; I'll wait.
+Claude: Started — render_id rnd_88213. A clip this length takes a few minutes; I'll wait.
         ...
         Done. Here's your video: https://…  (link expires, so grab it soon)
 ```
@@ -53,17 +53,33 @@ Claude: Started — render_id rnd_88213. This usually takes 7–15 minutes; I'll
 > integration, generating a fresh key will break it. Reuse the existing key, or use a
 > separate Owner/Admin account for agent work.
 
-### 2. Add the server
+### 2. Install the server
 
-> **Not on npm yet.** The `npx` commands below are how this will work once the
-> package is published. Until then, use the from-source option at the end of this
-> section — it behaves identically.
+```bash
+git clone https://github.com/marzvfx/lipdub-mcp.git
+cd lipdub-mcp
+npm ci && npm run build
+```
+
+Needs **Node 20 or newer**. No Node on your machine? `./manage.sh build` does the same
+thing inside a container.
+
+That gives you `dist/index.js`. Note its full path — `pwd` will tell you — and use it
+below wherever you see `/path/to/lipdub-mcp`.
+
+> Once we publish to npm you will be able to skip this step and use
+> `npx -y lipdub-mcp` as the command instead, with no clone and no build. Everything
+> else stays the same.
+
+### 3. Point your client at it
 
 <details open>
 <summary><b>Claude Code</b></summary>
 
 ```bash
-claude mcp add lipdub --env LIPDUB_API_KEY=your_key_here -- npx -y lipdub-mcp
+claude mcp add lipdub \
+  --env LIPDUB_API_KEY=your_key_here \
+  -- node /path/to/lipdub-mcp/dist/index.js
 ```
 </details>
 
@@ -74,13 +90,17 @@ claude mcp add lipdub --env LIPDUB_API_KEY=your_key_here -- npx -y lipdub-mcp
 {
   "mcpServers": {
     "lipdub": {
-      "command": "npx",
-      "args": ["-y", "lipdub-mcp"],
+      "command": "node",
+      "args": ["/path/to/lipdub-mcp/dist/index.js"],
       "env": { "LIPDUB_API_KEY": "your_key_here" }
     }
   }
 }
 ```
+
+The file lives at `~/Library/Application Support/Claude/claude_desktop_config.json` on
+macOS, and `%APPDATA%\Claude\claude_desktop_config.json` on Windows. Restart Claude
+Desktop after editing it.
 </details>
 
 <details>
@@ -90,8 +110,8 @@ claude mcp add lipdub --env LIPDUB_API_KEY=your_key_here -- npx -y lipdub-mcp
 {
   "mcpServers": {
     "lipdub": {
-      "command": "npx",
-      "args": ["-y", "lipdub-mcp"],
+      "command": "node",
+      "args": ["/path/to/lipdub-mcp/dist/index.js"],
       "env": { "LIPDUB_API_KEY": "your_key_here" }
     }
   }
@@ -109,16 +129,16 @@ claude mcp add lipdub --env LIPDUB_API_KEY=your_key_here -- npx -y lipdub-mcp
   ],
   "servers": {
     "lipdub": {
-      "command": "npx",
-      "args": ["-y", "lipdub-mcp"],
+      "command": "node",
+      "args": ["/path/to/lipdub-mcp/dist/index.js"],
       "env": { "LIPDUB_API_KEY": "${input:lipdub-key}" }
     }
   }
 }
 ```
 
-This pattern keeps the key out of a file you might commit. Given that LipDub issues
-one key per user, that matters more here than it does for most servers.
+This pattern keeps the key out of a file you might commit. Given that LipDub issues one
+key per user, that matters more here than it does for most servers.
 </details>
 
 <details>
@@ -128,8 +148,8 @@ one key per user, that matters more here than it does for most servers.
 {
   "mcpServers": {
     "lipdub": {
-      "command": "npx",
-      "args": ["-y", "lipdub-mcp"],
+      "command": "node",
+      "args": ["/path/to/lipdub-mcp/dist/index.js"],
       "env": { "LIPDUB_API_KEY": "your_key_here" }
     }
   }
@@ -142,48 +162,23 @@ one key per user, that matters more here than it does for most servers.
 
 ```toml
 [mcp_servers.lipdub]
-command = "npx"
-args = ["-y", "lipdub-mcp"]
+command = "node"
+args = ["/path/to/lipdub-mcp/dist/index.js"]
 env = { LIPDUB_API_KEY = "your_key_here" }
 ```
 </details>
 
-<details>
-<summary><b>From source</b> — works today, before the npm release</summary>
+### 4. Check it works
+
+First confirm the server itself runs:
 
 ```bash
-git clone https://github.com/marzvfx/lipdub-mcp.git
-cd lipdub-mcp
-npm ci && npm run build
+node /path/to/lipdub-mcp/dist/index.js --version
 ```
 
-Then point your client at the built entry point:
-
-```json
-{
-  "mcpServers": {
-    "lipdub": {
-      "command": "node",
-      "args": ["/absolute/path/to/lipdub-mcp/dist/index.js"],
-      "env": { "LIPDUB_API_KEY": "your_key_here" }
-    }
-  }
-}
-```
-
-Needs Node 20+. If you would rather not install Node, `./manage.sh build` does the
-same thing inside a container.
-</details>
-
-### 3. Check it works
-
-Ask your agent: **"check my LipDub connection"**.
-
-You can also sanity-check the server on its own:
-
-```bash
-npx lipdub-mcp --version    # or: node dist/index.js --version
-```
+Then ask your agent: **"check my LipDub connection"**. It should reply with your
+account id. If it asks you to set an API key, the key is not reaching the server —
+check the `env` block above and restart the client.
 
 ---
 
@@ -207,19 +202,27 @@ prompts) and two reference resources, `lipdub://guide/quickstart` and
 
 - **One** person on camera.
 - Face clearly visible and reasonably well lit.
-- Video: `.mp4`, `.mov`, `.avi`, `.webm`. Audio: `.mp3`, `.wav`, `.m4a`, `.aac`.
+
+| | Accepted |
+| --- | --- |
+| Video | `.mp4`, `.mov`, `.avi` |
+| Audio | `.mp3`, `.wav`, `.m4a`, `.aac`, `.ogg`, `.flac` — plus `.mp4` / `.mov`, since those containers can carry an audio-only track |
+| Size | up to **15 GB** per file (5 GB on the Basic plan) |
 
 ---
 
 ## Hosting your files
 
 Both inputs are **public URLs**, not local file paths. The link must return the media
-file itself.
+file itself — with one exception.
 
-These do **not** work: Google Drive, Dropbox and YouTube *share pages*; anything behind
-a login; expired links.
+**YouTube links work.** `youtube.com`, `youtu.be` and `youtube-nocookie.com` are
+resolved for you, so you can pass a normal watch URL as `video_url`.
 
-These do:
+These do **not** work: Google Drive and Dropbox *share pages*; anything behind a login;
+expired links.
+
+For your own files:
 
 ```bash
 # Amazon S3 — a time-limited direct link
@@ -243,9 +246,13 @@ scp keynote.mp4 you@yourserver:/var/www/html/
 
 ## Timing and cost
 
-A render takes about **7–15 minutes**. Renders consume credits from your LipDub
-account and cannot be refunded; cost scales with the length of the source video, so
-shorter clips cost less.
+Rendering takes **several minutes for a short clip, and longer for longer videos** —
+generation time scales with the length of the source. LipDub also waits up to
+**15 minutes** to download your two source files before giving up, so slow hosting
+shows up as a timeout rather than a render.
+
+Renders consume credits from your LipDub account and cannot be refunded; cost scales
+with the length of the source video, so shorter clips cost less.
 
 Checking status is **free and never rate-limited** — poll as often as you like.
 
@@ -280,7 +287,7 @@ directly bypasses them.
 | "out of credits" | Top up at [app.lipdub.ai](https://app.lipdub.ai) |
 | "could not download one of your source files" | The link is a share page, needs a login, or has expired. Use a direct link |
 | "downloaded your files but could not start the render" | Usually no credits, or no clearly visible speaking face |
-| Wait tool returned `still_running` | Normal — renders take 7–15 minutes. Not a failure; call it again |
+| Wait tool returned `still_running` | Normal — the render is still going. Not a failure; call it again |
 | Download link stopped working | Links are signed and short-lived. Call `lipdub_get_render` again |
 
 Full API documentation: [lipdub.readme.io](https://lipdub.readme.io/)

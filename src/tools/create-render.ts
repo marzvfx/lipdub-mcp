@@ -2,10 +2,14 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { ServerContext } from '../context.js';
 import {
+  formatExtensionList,
   MAX_OUTPUT_FILENAME_LENGTH,
   MAX_TRANSCRIPT_LENGTH,
   MAX_URL_LENGTH,
+  RESOLVABLE_VIDEO_HOSTS,
   SUPPORT_URLS,
+  SUPPORTED_AUDIO_EXTENSIONS,
+  SUPPORTED_VIDEO_EXTENSIONS,
   TYPICAL_RENDER_DURATION_TEXT,
 } from '../lipdub/constants.js';
 import { LipDubErrorCode, lipdubError } from '../lipdub/errors.js';
@@ -45,11 +49,12 @@ const DESCRIPTION = [
   'another language, produce that audio first with a separate text-to-speech or voice',
   'tool, host it at a URL, and pass that URL as audio_url.',
   '',
-  'Links must return the media file itself. Google Drive, Dropbox and YouTube share',
-  'pages, and anything behind a login, will fail.',
+  'Links must return the media file itself, with two exceptions: YouTube links work',
+  `(${formatExtensionList(RESOLVABLE_VIDEO_HOSTS)}), because they are resolved for you.`,
+  'Google Drive and Dropbox share pages, and anything behind a login, will fail.',
   '',
   `Returns immediately with a render_id — the render is NOT finished. Rendering takes`,
-  `about ${TYPICAL_RENDER_DURATION_TEXT}. Next step: call lipdub_wait_for_render with`,
+  `${TYPICAL_RENDER_DURATION_TEXT}. Next step: call lipdub_wait_for_render with`,
   'that render_id.',
 ].join('\n');
 
@@ -59,14 +64,14 @@ const inputSchema = {
     .max(MAX_URL_LENGTH)
     .optional()
     .describe(
-      'Direct https URL to the source video (one person, face visible). .mp4, .mov, .avi or .webm.',
+      `URL to the source video (one person, face visible). ${formatExtensionList(SUPPORTED_VIDEO_EXTENSIONS)}, or a YouTube link.`,
     ),
   audio_url: z
     .string()
     .max(MAX_URL_LENGTH)
     .optional()
     .describe(
-      'Direct https URL to the audio the person should appear to say. You must supply finished audio; LipDub 2 does not generate or translate speech.',
+      `Direct URL to the audio the person should appear to say (${formatExtensionList(SUPPORTED_AUDIO_EXTENSIONS)}). You must supply finished audio; LipDub 2 does not generate or translate speech.`,
     ),
   output_filename: z
     .string()
@@ -183,7 +188,7 @@ export function registerCreateRenderTool(server: McpServer, context: ServerConte
         }
         lines.push(
           '',
-          `This is NOT finished yet — a render takes about ${TYPICAL_RENDER_DURATION_TEXT}.`,
+          `This is NOT finished yet — a render takes ${TYPICAL_RENDER_DURATION_TEXT}.`,
           `Next step: call lipdub_wait_for_render with render_id "${result.renderId}".`,
         );
 

@@ -52,7 +52,7 @@ export function registerQuickDubPrompt(server: McpServer): void {
               '   somewhere with a public URL.',
               '3. Tell me this will charge credits to my LipDub account and cannot be refunded,',
               '   and wait for me to confirm before starting.',
-              `4. Start the render, then wait for it — it takes about ${TYPICAL_RENDER_DURATION_TEXT}.`,
+              `4. Start the render, then wait for it — it takes ${TYPICAL_RENDER_DURATION_TEXT}.`,
               '5. Give me the download link when it is ready, and remind me the link expires.',
             ].join('\n'),
           },
