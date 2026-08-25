@@ -1,7 +1,7 @@
 {
   "name": "lipdub-mcp",
   "version": "0.1.0",
-  "description": "MCP server for LipDub 2 — make a person in a video appear to speak a different audio track, with matched lip movement.",
+  "description": "MCP server for LipDub 2 \u2014 make a person in a video appear to speak a different audio track, with matched lip movement.",
   "keywords": [
     "mcp",
     "modelcontextprotocol",
@@ -39,7 +39,8 @@
     "test:watch": "vitest",
     "lint": "eslint .",
     "prepack": "npm run build",
-    "verify": "npm run typecheck && npm run lint && npm run build && npm run test"
+    "verify": "npm run typecheck && npm run lint && npm run build && npm run test",
+    "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",

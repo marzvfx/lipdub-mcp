@@ -180,6 +180,28 @@ Then ask your agent: **"check my LipDub connection"**. It should reply with your
 account id. If it asks you to set an API key, the key is not reaching the server —
 check the `env` block above and restart the client.
 
+#### Or test it without an agent
+
+There is a smoke test that drives the server exactly as a real MCP client does, so a
+pass means your installation genuinely works:
+
+```bash
+LIPDUB_API_KEY=your_key_here npm run smoke
+```
+
+That checks the handshake, the tool list and your API key. It renders nothing and
+costs nothing.
+
+To exercise the whole flow, including a real render — this **spends credits**:
+
+```bash
+LIPDUB_API_KEY=your_key_here npm run smoke -- --render \
+  --video=https://example.com/speaker.mp4 \
+  --audio=https://example.com/speech.mp3
+```
+
+It starts the render, waits for it, and prints the download link.
+
 ---
 
 ## Tools
