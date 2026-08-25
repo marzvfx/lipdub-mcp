@@ -7,7 +7,7 @@ Please report security issues **privately**, not as a public GitHub issue.
 - Preferred: [GitHub private vulnerability reporting](https://github.com/marzvfx/lipdub-mcp/security/advisories/new)
 - Or email: **security@lipdub.ai**
 
-Please include what you found, how to reproduce it, and what an attacker could achieve.
+Include what you found, how to reproduce it, and what an attacker could achieve.
 We aim to acknowledge within 3 business days and to keep you updated until it is
 resolved. Please give us a reasonable window to ship a fix before disclosing publicly.
 

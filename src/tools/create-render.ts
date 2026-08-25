@@ -40,7 +40,7 @@ const DESCRIPTION = [
   'Cost scales with the length of the source video. Confirm with the user first, then',
   'call again with confirm_spend set to true.',
   '',
-  'Supply BOTH sides as direct, publicly downloadable URLs:',
+  'Supply both sides as direct, publicly downloadable URLs:',
   '- video_url — a video of ONE person speaking, face clearly visible.',
   '- audio_url — the audio you want them to appear to say.',
   '',

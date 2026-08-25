@@ -15,7 +15,7 @@ MCP-compatible client.
 > **LipDub 2 does not translate, transcribe, or generate speech.** You bring the audio.
 > If you want a video dubbed into another language, generate that audio first with a
 > text-to-speech or voice-cloning tool, host it at a public URL, and pass that URL.
-> This server composes well with a TTS server — that is the intended workflow.
+> It pairs naturally with a text-to-speech server for that first step.
 
 ---
 
@@ -44,7 +44,7 @@ Claude: Started — render_id rnd_88213. A clip this length takes a few minutes;
 2. Open **Settings → API Keys**: [app.lipdub.ai/settings/api-keys](https://app.lipdub.ai/settings/api-keys)
 
    You must be an **Owner** or **Admin** on the account. Other roles are redirected to
-   the dashboard with no explanation — if that link bounces you, ask an Owner or Admin
+   the dashboard with no explanation. If that link bounces you, ask an Owner or Admin
    on your team to generate the key for you.
 3. Generate a key and copy it.
 
@@ -55,7 +55,7 @@ Claude: Started — render_id rnd_88213. A clip this length takes a few minutes;
 
 ### 2. Point your client at it
 
-Nothing to install — `npx` fetches it on first run.
+Nothing to install: `npx` fetches it on first run.
 
 <details open>
 <summary><b>Claude Code</b></summary>
@@ -173,8 +173,8 @@ npx -y lipdub-mcp --version
 ```
 
 Then ask your agent: **"check my LipDub connection"**. It should reply with your
-account id. If it asks you to set an API key, the key is not reaching the server —
-check the `env` block above and restart the client.
+account id. If it asks you to set an API key, the key is not reaching the server.
+Check the `env` block above and restart the client.
 
 #### Or test it without an agent
 
@@ -189,7 +189,7 @@ LIPDUB_API_KEY=your_key_here npm run smoke
 That checks the handshake, the tool list and your API key. It renders nothing and
 costs nothing.
 
-To exercise the whole flow, including a real render — this **spends credits**:
+To exercise the whole flow, including a real render. This **spends credits**:
 
 ```bash
 LIPDUB_API_KEY=your_key_here npm run smoke -- --render \
@@ -200,9 +200,9 @@ LIPDUB_API_KEY=your_key_here npm run smoke -- --render \
 It starts the render, waits for it, and prints the download link.
 
 If you already have assets uploaded to LipDub, pass their ids instead of URLs with
-`--video-id=<shot id> --audio-id=<upload id>` — useful when you have no public hosting
-to hand. And if a run is interrupted, `--render-id=<id>` re-attaches to the render
-that is already going rather than paying for a second one.
+`--video-id=<shot id> --audio-id=<upload id>`, which helps when you have nowhere public
+to host them. If a run is interrupted, `--render-id=<id>` re-attaches to the render
+already in flight rather than paying for a second one.
 
 ---
 
@@ -230,20 +230,20 @@ prompts) and two reference resources, `lipdub://guide/quickstart` and
 | | Accepted |
 | --- | --- |
 | Video | `.mp4`, `.mov`, `.avi` |
-| Audio | `.mp3`, `.wav`, `.m4a`, `.aac`, `.ogg`, `.flac` — plus `.mp4` / `.mov`, since those containers can carry an audio-only track |
-| Size | up to **15 GB** per file (5 GB on the Basic plan) |
+| Audio | `.mp3`, `.wav`, `.m4a`, `.aac`, `.ogg`, `.flac`, plus `.mp4` / `.mov`, since those containers can carry an audio-only track |
+| Size | up to 15 GB per file, or 5 GB on the legacy Basic plan |
 
 ---
 
 ## Hosting your files
 
-Both inputs are **public URLs**, not local file paths. The link must return the media
-file itself — with one exception.
+Both inputs are public URLs, not local file paths, and the link must return the media
+file itself.
 
-**YouTube links work.** `youtube.com`, `youtu.be` and `youtube-nocookie.com` are
-resolved for you, so you can pass a normal watch URL as `video_url`.
+YouTube is the exception: `youtube.com`, `youtu.be` and `youtube-nocookie.com` are
+resolved for you, so a normal watch URL works as `video_url`.
 
-These do **not** work: Google Drive and Dropbox *share pages*; anything behind a login;
+These do not work: Google Drive and Dropbox share pages, anything behind a login, and
 expired links.
 
 For your own files:
@@ -270,7 +270,7 @@ scp keynote.mp4 you@yourserver:/var/www/html/
 
 ## Timing and cost
 
-Rendering takes **several minutes for a short clip, and longer for longer videos** —
+Rendering takes several minutes for a short clip, and longer for longer videos, because
 generation time scales with the length of the source. LipDub also waits up to
 **15 minutes** to download your two source files before giving up, so slow hosting
 shows up as a timeout rather than a render.
@@ -278,7 +278,7 @@ shows up as a timeout rather than a render.
 Renders consume credits from your LipDub account and cannot be refunded; cost scales
 with the length of the source video, so shorter clips cost less.
 
-Checking status is **free and never rate-limited** — poll as often as you like.
+Checking status is free and is not rate-limited, so poll as often as you like.
 
 Your credit balance is not available through the API; see
 [app.lipdub.ai](https://app.lipdub.ai).
@@ -297,7 +297,7 @@ The server also stops after 5 renders per session.
 | `LIPDUB_REQUIRE_SPEND_CONFIRMATION` | `true` | Set `false` only for headless pipelines with no human watching. |
 | `LIPDUB_LOG_LEVEL` | `warn` | `debug`, `info`, `warn`, `error`. Logs go to stderr. |
 
-These are usability guardrails, not security controls — anything calling the API
+These are usability guardrails, not security controls. Anything calling the API
 directly bypasses them.
 
 ---
@@ -344,7 +344,7 @@ issue, and never paste an API key into one.
 
 ## Limitations
 
-- No translation or speech generation — you supply the audio.
+- No translation or speech generation. You supply the audio.
 - URL inputs only; no local file upload.
 - Credit balance and price estimates are not available through the API.
 - LipDub issues one API key per user, so a key cannot be scoped to this server alone.

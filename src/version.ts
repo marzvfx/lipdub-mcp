@@ -6,7 +6,7 @@
  * `test/version.test.ts` asserts this stays equal to package.json, so the duplication
  * cannot drift silently.
  */
-export const SERVER_VERSION = '0.1.0';
+export const SERVER_VERSION = '0.1.1';
 
 /** MCP server name, also used as the User-Agent product token. */
 export const SERVER_NAME = 'lipdub-mcp';

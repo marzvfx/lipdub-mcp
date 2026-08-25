@@ -8,6 +8,17 @@ version. New capability arrives as new tools, and input schema changes are addit
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-08-26
+
+### Fixed
+
+- The README published to npm still told people to clone and build, and said the
+  package was not on npm yet. It was published moments after that text was written, so
+  the registry page contradicted itself. Spotted by Pat.
+- Tightened the prose throughout. Halved the em-dash count, dropped a few empty
+  intensifiers, and removed a line congratulating the server on its own design.
+- Called the Basic plan legacy, which is what it is.
+
 ## [0.1.0] — 2026-08-25
 
 First release.
