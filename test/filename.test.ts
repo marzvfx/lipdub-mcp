@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_OUTPUT_FILENAME_LENGTH } from '../src/lipdub/constants.js';
+import { MAX_OUTPUT_FILENAME_LENGTH, SUPPORTED_VIDEO_EXTENSIONS } from '../src/lipdub/constants.js';
 import { resolveOutputFilename, sanitizeOutputFilename } from '../src/lipdub/filename.js';
 
 describe('sanitizeOutputFilename', () => {
@@ -13,7 +13,18 @@ describe('sanitizeOutputFilename', () => {
 
   it('keeps other supported video extensions', () => {
     expect(sanitizeOutputFilename('clip.mov')).toBe('clip.mov');
-    expect(sanitizeOutputFilename('clip.webm')).toBe('clip.webm');
+    expect(sanitizeOutputFilename('clip.avi')).toBe('clip.avi');
+  });
+
+  it('does not treat .webm as a video extension, because the API rejects it', () => {
+    // Regression guard: we previously advertised .webm support the API does not have.
+    expect(sanitizeOutputFilename('clip.webm')).toBe('clip.webm.mp4');
+  });
+
+  it('derives the accepted list from the constant rather than a hardcoded copy', () => {
+    for (const extension of SUPPORTED_VIDEO_EXTENSIONS) {
+      expect(sanitizeOutputFilename(`clip${extension}`)).toBe(`clip${extension}`);
+    }
   });
 
   it('treats an unsupported extension as part of the name', () => {
