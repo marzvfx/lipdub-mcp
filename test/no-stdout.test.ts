@@ -128,6 +128,36 @@ describe('stdout carries only JSON-RPC', () => {
         expect(stdout, `${flag} wrote to stdout`).toBe('');
         expect(stderr).toContain('lipdub-mcp');
       }
+      const help = await runOnce(['--help']);
+      expect(help.stderr).toContain('--smoke');
+    },
+    30_000,
+  );
+
+  it.runIf(existsSync(ENTRY_POINT))(
+    'answers --smoke without a key on stderr, exit 2, and leaves stdout empty',
+    async () => {
+      const child = spawn(process.execPath, [ENTRY_POINT, '--smoke'], {
+        env: { ...process.env, LIPDUB_API_KEY: '', LIPDUB_API_KEY_FILE: '' },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      const { stdout, stderr, code } = await new Promise<{
+        stdout: string;
+        stderr: string;
+        code: number | null;
+      }>((resolve, reject) => {
+        let out = '';
+        let err = '';
+        child.stdout.on('data', (chunk: Buffer) => (out += chunk.toString()));
+        child.stderr.on('data', (chunk: Buffer) => (err += chunk.toString()));
+        child.on('error', reject);
+        child.on('close', (exitCode) => resolve({ stdout: out, stderr: err, code: exitCode }));
+      });
+
+      expect(code).toBe(2);
+      expect(stdout).toBe('');
+      expect(stderr).toContain('LIPDUB_API_KEY');
+      expect(stderr).toContain('npx -y lipdub-mcp --smoke');
     },
     30_000,
   );
