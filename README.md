@@ -178,12 +178,11 @@ Check the `env` block above and restart the client.
 
 #### Or test it without an agent
 
-There is a smoke test that drives the server exactly as a real MCP client does, so a
-pass means your installation genuinely works. It lives in the repo, so clone it first
-(see *From source* above), then:
+There is a smoke test that drives the published server exactly as a real MCP client
+does, so a pass means the thing you installed actually works. No clone:
 
 ```bash
-LIPDUB_API_KEY=your_key_here npm run smoke
+LIPDUB_API_KEY=your_key_here npx -y lipdub-mcp --smoke
 ```
 
 That checks the handshake, the tool list and your API key. It renders nothing and
@@ -192,7 +191,7 @@ costs nothing.
 To exercise the whole flow, including a real render. This **spends credits**:
 
 ```bash
-LIPDUB_API_KEY=your_key_here npm run smoke -- --render \
+LIPDUB_API_KEY=your_key_here npx -y lipdub-mcp --smoke --render \
   --video=https://example.com/speaker.mp4 \
   --audio=https://example.com/speech.mp3
 ```
@@ -203,6 +202,8 @@ If you already have assets uploaded to LipDub, pass their ids instead of URLs wi
 `--video-id=<shot id> --audio-id=<upload id>`, which helps when you have nowhere public
 to host them. If a run is interrupted, `--render-id=<id>` re-attaches to the render
 already in flight rather than paying for a second one.
+
+From a git checkout, `npm run smoke` is the same command.
 
 ---
 

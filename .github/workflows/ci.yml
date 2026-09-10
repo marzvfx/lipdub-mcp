@@ -104,12 +104,28 @@ jobs:
       - name: Pack
         run: npm pack
 
+      - name: The tarball includes the smoke client
+        run: tar -tzf lipdub-mcp-*.tgz | grep -q 'package/dist/smoke.js'
+
       - name: Install the tarball into a clean project and run it
         run: |
           mkdir -p "${RUNNER_TEMP}/consumer"
           cd "${RUNNER_TEMP}/consumer"
           npm init -y >/dev/null
           npm install "${GITHUB_WORKSPACE}"/lipdub-mcp-*.tgz
+
+          # --help and --smoke must work from the published tarball, not only a git clone.
+          npx lipdub-mcp --help >/dev/null 2>help.err
+          grep -q -- '--smoke' help.err
+
+          set +e
+          LIPDUB_API_KEY= LIPDUB_API_KEY_FILE= npx lipdub-mcp --smoke >smoke.out 2>smoke.err
+          smoke_code=$?
+          set -e
+          test "${smoke_code}" -eq 2
+          grep -q LIPDUB_API_KEY smoke.err
+          test ! -s smoke.out
+
           # A bare handshake: the server must answer initialize on stdout and exit cleanly.
           printf '%s\n' \
             '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2026-07-28","capabilities":{},"clientInfo":{"name":"ci","version":"0"}}}' \

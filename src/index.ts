@@ -1,18 +1,20 @@
 #!/usr/bin/env node
+import { interactiveHint, shouldPrintInteractiveHint } from './interactive-hint.js';
+import { SUPPORT_URLS } from './lipdub/constants.js';
 import { startStdioServer } from './transports/stdio.js';
 import { SERVER_NAME, SERVER_VERSION } from './version.js';
-import { SUPPORT_URLS } from './lipdub/constants.js';
 
 /**
  * Entry point for `npx lipdub-mcp`.
  *
  * Normally this speaks MCP over stdio and produces no human-readable output at all.
- * `--version` and `--help` are the two exceptions, because anyone debugging a broken
- * client config will reach for them first, and a server that answers neither looks
- * broken even when it is fine.
+ * `--version`, `--help` and `--smoke` are the exceptions, because anyone debugging a
+ * broken client config will reach for them first, and a server that answers none of
+ * them looks broken even when it is fine.
  *
  * Everything non-protocol is written to stderr, never stdout: on the stdio transport
- * stdout carries the JSON-RPC frames and a stray write corrupts the stream.
+ * stdout carries the JSON-RPC frames and a stray write corrupts the stream. `--smoke`
+ * is the one human-facing command that writes a pass/fail report to stdout.
  */
 
 const HELP = `${SERVER_NAME} ${SERVER_VERSION}
@@ -28,6 +30,10 @@ stdout. To use it, add it to your client's configuration:
 Setup for Claude Desktop, Cursor, VS Code, Gemini CLI and Codex:
   ${SUPPORT_URLS.setupDocs}
 
+To test the install without an agent (needs a key, spends nothing):
+
+  LIPDUB_API_KEY=<your key> npx -y ${SERVER_NAME} --smoke
+
 Environment:
   LIPDUB_API_KEY                     Your LipDub API key. Required.
                                      Get one at ${SUPPORT_URLS.apiKeys}
@@ -39,6 +45,8 @@ Environment:
 Options:
   --version   Print the version and exit.
   --help      Print this message and exit.
+  --smoke     Drive the server as a real MCP client. Handshake, tool list, API key.
+              Add --render to run a paid render.
 `;
 
 function main(): void {
@@ -51,6 +59,23 @@ function main(): void {
 
   if (args.includes('--help') || args.includes('-h')) {
     process.stderr.write(HELP);
+    return;
+  }
+
+  if (args.includes('--smoke')) {
+    // Loaded only for `--smoke` so a normal MCP session does not pull in the client SDK.
+    void import('./smoke.js')
+      .then(({ runSmoke }) => runSmoke(args))
+      .catch((error: unknown) => {
+        const reason = error instanceof Error ? error.message : String(error);
+        process.stderr.write(`smoke test crashed: ${reason}\n`);
+        process.exitCode = 1;
+      });
+    return;
+  }
+
+  if (shouldPrintInteractiveHint(Boolean(process.stdin.isTTY), args)) {
+    process.stderr.write(interactiveHint());
     return;
   }
 

@@ -8,6 +8,21 @@ version. New capability arrives as new tools, and input schema changes are addit
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-09-11
+
+### Added
+
+- `npx -y lipdub-mcp --smoke` drives the published server as a real MCP client.
+  QA can check the handshake, tool list and API key without cloning the repo.
+  `--render` still spends credits and stays opt-in.
+- Running `npx lipdub-mcp` in a terminal prints a short hint instead of sitting
+  there looking hung. MCP clients are unaffected: they do not attach a TTY.
+
+### Fixed
+
+- Raised transitive `js-yaml`, `hono` and `qs` so `npm audit --audit-level=high`
+  stays green. None of those are used by this server directly.
+
 ## [0.1.1] — 2026-08-26
 
 ### Fixed

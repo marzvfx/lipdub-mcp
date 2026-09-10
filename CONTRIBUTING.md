@@ -40,6 +40,9 @@ corrupts the stream and the client reports an undiagnosable connection failure. 
 logger in `src/logging.ts`, which writes to stderr. The `no-console` lint rule and
 `test/no-stdout.test.ts` both enforce this.
 
+`--smoke` is the one exception: it is not serving MCP. It prints a pass/fail report on
+stdout so QA can read or pipe it. `--help` and `--version` still go to stderr.
+
 ### 3. The API key never leaves its lane
 
 It is read from the environment, sent only to `api.lipdub.ai`, and redacted from every
