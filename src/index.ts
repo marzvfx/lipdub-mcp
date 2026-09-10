@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { interactiveHint, shouldPrintInteractiveHint } from './interactive-hint.js';
 import { SUPPORT_URLS } from './lipdub/constants.js';
-import { runSmoke } from './smoke.js';
 import { startStdioServer } from './transports/stdio.js';
 import { SERVER_NAME, SERVER_VERSION } from './version.js';
 
@@ -64,11 +63,14 @@ function main(): void {
   }
 
   if (args.includes('--smoke')) {
-    runSmoke(args).catch((error: unknown) => {
-      const reason = error instanceof Error ? error.message : String(error);
-      process.stderr.write(`smoke test crashed: ${reason}\n`);
-      process.exitCode = 1;
-    });
+    // Loaded only for `--smoke` so a normal MCP session does not pull in the client SDK.
+    void import('./smoke.js')
+      .then(({ runSmoke }) => runSmoke(args))
+      .catch((error: unknown) => {
+        const reason = error instanceof Error ? error.message : String(error);
+        process.stderr.write(`smoke test crashed: ${reason}\n`);
+        process.exitCode = 1;
+      });
     return;
   }
 

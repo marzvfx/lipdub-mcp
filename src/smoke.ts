@@ -19,8 +19,17 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { resolveApiKey } from './context.js';
 import { SUPPORT_URLS } from './lipdub/constants.js';
 import { SERVER_NAME } from './version.js';
+
+const EXPECTED_TOOLS = [
+  'lipdub_check_connection',
+  'lipdub_create_render',
+  'lipdub_get_render',
+  'lipdub_list_renders',
+  'lipdub_wait_for_render',
+];
 
 /** How long to keep waiting for a render before giving up and reporting the id. */
 const RENDER_WAIT_BUDGET_SECONDS = 30 * 60;
@@ -88,7 +97,7 @@ function childEnvironment(apiKey: string): Record<string, string> {
 }
 
 export async function runSmoke(argv: readonly string[]): Promise<void> {
-  const apiKey = (process.env.LIPDUB_API_KEY ?? '').trim();
+  const apiKey = resolveApiKey(process.env);
   if (!apiKey) {
     process.stderr.write(
       'LIPDUB_API_KEY is not set.\n\n' +
@@ -150,7 +159,9 @@ export async function runSmoke(argv: readonly string[]): Promise<void> {
   try {
     const { tools } = await client.listTools();
     const names = tools.map((tool) => tool.name).sort();
-    const ok = names.length === 5;
+    const expected = [...EXPECTED_TOOLS].sort();
+    const ok =
+      names.length === expected.length && names.every((name, index) => name === expected[index]);
     report(`tool list (${names.length} tools)`, ok, names.join('\n'));
     if (!ok) failures += 1;
 

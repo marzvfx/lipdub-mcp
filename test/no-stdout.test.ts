@@ -34,6 +34,7 @@ const HANDSHAKE = [
 interface SessionOutput {
   stdout: string;
   stderr: string;
+  code: number | null;
 }
 
 /**
@@ -42,18 +43,22 @@ interface SessionOutput {
  * Used for the flag paths, which exit immediately rather than serving a session.
  *
  * @param args Command-line arguments to pass.
- * @returns Whatever the process wrote to stdout and stderr.
+ * @param environment Extra environment variables. Empty strings override inherited values.
+ * @returns Whatever the process wrote, plus its exit code.
  */
-function runOnce(args: string[]): Promise<SessionOutput> {
+function runOnce(args: string[], environment: NodeJS.ProcessEnv = {}): Promise<SessionOutput> {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [ENTRY_POINT, ...args], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, [ENTRY_POINT, ...args], {
+      env: { ...process.env, ...environment },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
 
     let stdout = '';
     let stderr = '';
     child.stdout.on('data', (chunk: Buffer) => (stdout += chunk.toString()));
     child.stderr.on('data', (chunk: Buffer) => (stderr += chunk.toString()));
     child.on('error', reject);
-    child.on('close', () => resolve({ stdout, stderr }));
+    child.on('close', (code) => resolve({ stdout, stderr, code }));
   });
 }
 
@@ -70,7 +75,7 @@ function runSession(environment: NodeJS.ProcessEnv): Promise<SessionOutput> {
     child.stdout.on('data', (chunk: Buffer) => (stdout += chunk.toString()));
     child.stderr.on('data', (chunk: Buffer) => (stderr += chunk.toString()));
     child.on('error', reject);
-    child.on('close', () => resolve({ stdout, stderr }));
+    child.on('close', (code) => resolve({ stdout, stderr, code }));
 
     child.stdin.write(`${HANDSHAKE}\n`);
     // Give the server a moment to answer before closing stdin, which ends the session.
@@ -137,27 +142,32 @@ describe('stdout carries only JSON-RPC', () => {
   it.runIf(existsSync(ENTRY_POINT))(
     'answers --smoke without a key on stderr, exit 2, and leaves stdout empty',
     async () => {
-      const child = spawn(process.execPath, [ENTRY_POINT, '--smoke'], {
-        env: { ...process.env, LIPDUB_API_KEY: '', LIPDUB_API_KEY_FILE: '' },
-        stdio: ['ignore', 'pipe', 'pipe'],
-      });
-      const { stdout, stderr, code } = await new Promise<{
-        stdout: string;
-        stderr: string;
-        code: number | null;
-      }>((resolve, reject) => {
-        let out = '';
-        let err = '';
-        child.stdout.on('data', (chunk: Buffer) => (out += chunk.toString()));
-        child.stderr.on('data', (chunk: Buffer) => (err += chunk.toString()));
-        child.on('error', reject);
-        child.on('close', (exitCode) => resolve({ stdout: out, stderr: err, code: exitCode }));
+      const { stdout, stderr, code } = await runOnce(['--smoke'], {
+        LIPDUB_API_KEY: '',
+        LIPDUB_API_KEY_FILE: '',
       });
 
       expect(code).toBe(2);
       expect(stdout).toBe('');
       expect(stderr).toContain('LIPDUB_API_KEY');
       expect(stderr).toContain('npx -y lipdub-mcp --smoke');
+    },
+    30_000,
+  );
+
+  it.runIf(existsSync(ENTRY_POINT))(
+    'answers --smoke --render without media on stderr, exit 2, and leaves stdout empty',
+    async () => {
+      // A dummy key is enough: the media check runs before any network call.
+      const { stdout, stderr, code } = await runOnce(['--smoke', '--render'], {
+        LIPDUB_API_KEY: 'not-a-real-key',
+        LIPDUB_API_KEY_FILE: '',
+      });
+
+      expect(code).toBe(2);
+      expect(stdout).toBe('');
+      expect(stderr).toContain('--render');
+      expect(stderr).toContain('npx -y lipdub-mcp --smoke --render');
     },
     30_000,
   );

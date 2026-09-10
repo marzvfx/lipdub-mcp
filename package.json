@@ -53,5 +53,10 @@
     "typescript": "5.9.3",
     "typescript-eslint": "8.46.1",
     "vitest": "4.1.11"
+  },
+  "overrides": {
+    "hono": "4.13.7",
+    "js-yaml": "4.3.2",
+    "qs": "6.16.0"
   }
 }
