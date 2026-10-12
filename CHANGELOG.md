@@ -8,6 +8,15 @@ version. New capability arrives as new tools, and input schema changes are addit
 
 ## [Unreleased]
 
+### Fixed
+
+- Raised `@modelcontextprotocol/sdk` to 1.32.1 for GHSA-6qxp-vccf-f47h. The advisory
+  is in the SDK's OAuth client flow; the server and its `--smoke` client only speak
+  stdio and never reach it, but the SDK ships as a runtime dependency.
+- Raised `typescript-eslint` (development only) and the transitive `fast-uri`,
+  `proxy-addr`, `source-map-js`, `ip-address` and `brace-expansion` so
+  `npm audit --audit-level=high` stays green.
+
 ## [0.1.2] — 2026-09-11
 
 ### Added
