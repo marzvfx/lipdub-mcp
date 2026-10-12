@@ -58,9 +58,17 @@ jobs:
       - name: Create the GitHub Release
         # A tag alone is not a release: without this, the version is invisible on the
         # releases page and release notes never get written.
+        #
+        # Skip rather than fail when the release already exists, for the same reason as
+        # the npm step above: a re-run after a partial failure, or a release drafted by
+        # hand, otherwise fails here with HTTP 422 and skips the registry job with it.
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            echo "::notice::GitHub Release ${GITHUB_REF_NAME} already exists; skipping."
+            exit 0
+          fi
           gh release create "${GITHUB_REF_NAME}" \
             --title "${GITHUB_REF_NAME}" \
             --notes-file CHANGELOG.md \
