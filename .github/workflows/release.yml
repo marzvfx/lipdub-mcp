@@ -3,6 +3,9 @@ name: Release
 on:
   push:
     tags: ['v*']
+  # Dispatched on main, this tags the commit as v<package.json version> and dispatches
+  # itself again on that tag; dispatched on a tag, it releases that tag. See `tag` below.
+  workflow_dispatch:
 
 # GitHub-hosted runners only — see the note in ci.yml.
 permissions:
@@ -10,7 +13,48 @@ permissions:
   id-token: write # npm trusted publishing (OIDC); no long-lived npm token is stored
 
 jobs:
+  tag:
+    # Lets a release start without pushing a tag by hand: from the Actions tab, or from
+    # tooling that can dispatch workflows but not push tags. A tag pushed with the
+    # workflow token never triggers a workflow, but a dispatch does, so this job tags
+    # the commit and then dispatches this workflow on the tag. That second run is an
+    # ordinary tag-ref release: every step below, and the npm-publish environment's
+    # deployment rules, see exactly what a pushed tag would give them.
+    if: github.event_name == 'workflow_dispatch' && github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the tag
+      actions: write # dispatch this workflow on the new tag
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag the dispatched commit and release it
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
+            echo "::error::Releases are cut from main; this run was dispatched on ${GITHUB_REF}."
+            exit 1
+          fi
+          release_tag="v$(node -p "require('./package.json').version")"
+          if git fetch --quiet origin "refs/tags/${release_tag}:refs/tags/${release_tag}" 2>/dev/null; then
+            tagged_commit="$(git rev-parse "refs/tags/${release_tag}^{commit}")"
+            if [ "${tagged_commit}" != "${GITHUB_SHA}" ]; then
+              echo "::error::${release_tag} already tags ${tagged_commit}, not ${GITHUB_SHA}. Bump the version in package.json first."
+              exit 1
+            fi
+            echo "::notice::${release_tag} already tags this commit; releasing it."
+          else
+            git tag "${release_tag}" "${GITHUB_SHA}"
+            git push origin "refs/tags/${release_tag}"
+          fi
+          gh workflow run release.yml --repo "${GITHUB_REPOSITORY}" --ref "${release_tag}"
+          echo "::notice::Dispatched the release of ${release_tag}."
+
   publish:
+    # Only ever runs on a tag ref: a pushed tag, or the dispatch the `tag` job sends.
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     environment: npm-publish # protected environment, requires a reviewer
 
