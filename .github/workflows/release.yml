@@ -112,6 +112,53 @@ jobs:
           ./mcp-publisher login dns --domain lipdub.ai --private-key "${MCP_PRIVATE_KEY}"
           echo "ready=true" >> "${GITHUB_OUTPUT}"
 
-      - name: Publish
+      - name: Skip when this version is already listed
+        # Same idempotency as the npm and GitHub Release steps: a re-run must not fail
+        # because an earlier attempt already got this far.
+        id: listing
         if: steps.auth.outputs.ready == 'true'
+        run: |
+          server_name="$(node -p "require('./server.json').name")"
+          server_version="$(node -p "require('./server.json').version")"
+          encoded_server_name="$(node -p "encodeURIComponent(process.argv[1])" "${server_name}")"
+          listing_status="$(curl -sS -o /dev/null -w '%{http_code}' \
+            "https://registry.modelcontextprotocol.io/v0.1/servers/${encoded_server_name}/versions/${server_version}")"
+          case "${listing_status}" in
+            200)
+              echo "::notice::${server_name}@${server_version} is already listed; skipping."
+              echo "needed=false" >> "${GITHUB_OUTPUT}"
+              ;;
+            404)
+              echo "needed=true" >> "${GITHUB_OUTPUT}"
+              ;;
+            *)
+              echo "::error::Registry lookup for ${server_name}@${server_version} returned HTTP ${listing_status}."
+              exit 1
+              ;;
+          esac
+
+      - name: Wait until npm serves this version
+        # The registry proves ownership by fetching this version's package.json from
+        # npm and comparing its mcpName. npm can take minutes to serve a fresh publish,
+        # and publishing to the registry before then fails the listing.
+        if: steps.listing.outputs.needed == 'true'
+        run: |
+          server_name="$(node -p "require('./server.json').name")"
+          package_name="$(node -p "require('./package.json').name")"
+          package_version="$(node -p "require('./package.json').version")"
+          maximum_attempts=30
+          seconds_between_attempts=10
+          for attempt in $(seq 1 "${maximum_attempts}"); do
+            published_mcp_name="$(npm view "${package_name}@${package_version}" mcpName 2>/dev/null || true)"
+            if [ "${published_mcp_name}" = "${server_name}" ]; then
+              exit 0
+            fi
+            echo "Attempt ${attempt}/${maximum_attempts}: npm does not serve ${package_name}@${package_version} with mcpName yet."
+            sleep "${seconds_between_attempts}"
+          done
+          echo "::error::npm never served ${package_name}@${package_version} with mcpName ${server_name}."
+          exit 1
+
+      - name: Publish
+        if: steps.listing.outputs.needed == 'true'
         run: ./mcp-publisher publish

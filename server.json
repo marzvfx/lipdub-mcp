@@ -1,19 +1,19 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "ai.lipdub/lipdub-mcp",
-  "description": "Lip-sync a video to a different audio track with LipDub 2 \u2014 submit a render, track it, and fetch the finished video.",
+  "description": "Lip-sync a video to a different audio track with LipDub 2: submit, track and fetch renders.",
   "repository": {
     "url": "https://github.com/marzvfx/lipdub-mcp",
     "source": "github"
   },
-  "version": "0.1.2",
+  "version": "0.1.3",
   "websiteUrl": "https://lipdub.ai",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "lipdub-mcp",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "transport": {
         "type": "stdio"
       },

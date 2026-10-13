@@ -24,6 +24,7 @@ const REPOSITORY_ROOT = join(import.meta.dirname, '..');
 
 interface ServerManifest {
   name: string;
+  description: string;
   version: string;
   packages: Array<{
     registryType: string;
@@ -40,7 +41,7 @@ const manifest = JSON.parse(
 
 const packageManifest = JSON.parse(
   readFileSync(join(REPOSITORY_ROOT, 'package.json'), 'utf8'),
-) as { name: string; version: string };
+) as { name: string; version: string; mcpName?: string };
 
 describe('server.json', () => {
   const entry = manifest.packages[0];
@@ -93,6 +94,20 @@ describe('server.json', () => {
     // Reverse-DNS of lipdub.ai. A domain-verified namespace reads as first-party in a
     // way that io.github.* does not.
     expect(manifest.name).toBe('ai.lipdub/lipdub-mcp');
+  });
+
+  it('is claimed by the npm package, so the registry accepts the listing', () => {
+    // The registry proves npm ownership by reading `mcpName` from the published
+    // package.json and rejects the publish when it does not equal the server name.
+    // 0.1.2 shipped without it, so that version can never be listed.
+    expect(packageManifest.mcpName).toBe(manifest.name);
+  });
+
+  it('keeps the description within the registry schema limit', () => {
+    // The registry schema caps `description` at 100 characters and rejects the whole
+    // publish when it is longer; 0.1.2's 116-character description would have failed.
+    const REGISTRY_DESCRIPTION_MAX_LENGTH = 100;
+    expect(manifest.description.length).toBeLessThanOrEqual(REGISTRY_DESCRIPTION_MAX_LENGTH);
   });
 });
 
