@@ -1,6 +1,7 @@
 {
   "name": "lipdub-mcp",
-  "version": "0.1.2",
+  "version": "0.1.3",
+  "mcpName": "ai.lipdub/lipdub-mcp",
   "description": "MCP server for LipDub 2 \u2014 make a person in a video appear to speak a different audio track, with matched lip movement.",
   "keywords": [
     "mcp",

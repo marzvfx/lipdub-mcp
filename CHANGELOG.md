@@ -8,8 +8,15 @@ version. New capability arrives as new tools, and input schema changes are addit
 
 ## [Unreleased]
 
+## [0.1.3] — 2026-10-13
+
 ### Fixed
 
+- The server can now be listed on the official MCP registry. The registry proves npm
+  ownership by reading `mcpName` from the published `package.json`, and 0.1.2 shipped
+  without it, so its listing could never be accepted. The registry description was
+  also over the schema's 100-character limit and has been shortened, and `server.json`
+  moves to the current `2025-12-11` schema.
 - Raised `@modelcontextprotocol/sdk` to 1.32.1 for GHSA-6qxp-vccf-f47h. The advisory
   is in the SDK's OAuth client flow; the server and its `--smoke` client only speak
   stdio and never reach it, but the SDK ships as a runtime dependency.
